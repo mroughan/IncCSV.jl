@@ -1,21 +1,16 @@
 # IncCSV.jl
 
-INC is **INi-Csv**
-
-or **Ini - aNd - Csv**
-
-or **INCluded metadata**
-
-or **Intrinsic aNd Connate metadata**
-
 IncCSV is a small layer over CSV.jl for CSV files with included metadata.
 
-INC files are assumed to be UTF-8 encoded text.
+INC is **INi-Csv**
 
-The package's design commitments are recorded in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+  or **Ini - aNd - Csv**
 
-An INC file is just:
+  or **INCluded metadata**
+
+  or **Intrinsic aNd Connate metadata**
+
+An INC file is just a metadata part (in INI file format) followed by a data part (in CSV format). For example:
 
 ```text
 ---
@@ -27,6 +22,30 @@ time,temperature
 0,21.4
 1,21.8
 ```
+
+The package is intended to provide a very lighweight method to handle a very common case: simple metadata that describes tabular data. 
+
+The package's design commitments are recorded in
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+
+Worth repeating the core principles are:
+
+- Keep the format readable by people using ordinary text editors.
+- Reuse CSV.jl for CSV parsing and writing.
+- Keep metadata parsing small, predictable, and easy to inspect.
+- Prefer explicit behavior over clever inference.
+- Preserve ordinary CSV workflows wherever possible.
+- Avoid expanding the metadata language into a general configuration language.
+
+and the non-goals are: 
+
+- a general-purpose metadata standard,
+- a full schema validation language,
+- a nested document format,
+- a replacement for CSV.jl,
+- a metadata catalogue or search system,
+- a complex serialization format.
 
 The metadata block is deliberately small: `key = value` pairs, plus optional
 one-level sections. Unquoted signed integers are read as `Int`; quoted values
