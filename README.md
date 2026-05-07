@@ -4,9 +4,7 @@
 
 IncCSV is a small layer over CSV.jl to include metadata into  CSV files. It is simple, lightweight, pragmatic and intended to be useful to everyday users who currently use CSV files, and should include some metadata, but shy away from more complicated ways to do so. 
 
-INC is designed as a lightweight embedded-metadata profile for standalone tabular datasets and is intended to complement rather than replace CSVW and Frictionless Data.
-
-INC is motivated by the observation that most tabular datasets require only a small, shallow metadata structure, and that tabular data (typically stored as CSV or one of the related formats) is incredibly successful. 
+INC is motivated by the observation that most standalone tabular datasets require only a small, shallow metadata structure, and that tabular data (typically stored as CSV or one of the related formats) is incredibly successful. It is intended to complement rather than replace CSVW and Frictionless Data.
 
 INC is **IN**i+**C**sv or **I**ni - a**N**d - **C**sv
  or **INC**luded metadata
