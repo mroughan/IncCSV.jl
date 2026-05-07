@@ -2,7 +2,11 @@
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mroughan.github.io/IncCSV.jl/stable)
 
-IncCSV is a small layer over CSV.jl to include metadata into  CSV files.
+IncCSV is a small layer over CSV.jl to include metadata into  CSV files. It is simple, lightweight, pragmatic and intended to be useful to everyday users who currently use CSV files, and should include some metadata, but shy away from more complicated ways to do so. 
+
+INC is designed as a lightweight embedded-metadata profile for standalone tabular datasets and is intended to complement rather than replace CSVW and Frictionless Data.
+
+INC is motivated by the observation that most tabular datasets require only a small, shallow metadata structure, and that tabular data (typically stored as CSV or one of the related formats) is incredibly successful. 
 
 INC is **IN**i+**C**sv or **I**ni - a**N**d - **C**sv
  or **INC**luded metadata
@@ -21,7 +25,7 @@ time,temperature
 1,21.8
 ```
 
-The package is intended to provide a very lighweight method to handle a very common case: simple metadata that describes tabular data. 
+The package is intended to provide a very lightweight method to handle a very common case: simple metadata that describes tabular data. 
 
 The package's design commitments are recorded in
 [`ARCHITECTURE.md`](ARCHITECTURE.md) and full documentation 
@@ -115,3 +119,22 @@ Small checked-in example files live in `artifacts/examples`.
 This package was developed with assistance from OpenAI Codex, an AI coding
 assistant based on GPT-5. Code design decisions were human mediated, and the
 resulting code was manually reviewed.
+
+## Related approaches
+
+A number of existing formats incorporate metadata directly within tabular data files using header structures preceding the data. The CSVY format combines a YAML front matter block with a CSV body, allowing structured metadata to be stored within a single file. Similarly, the Enhanced CSV (ECSV) format developed within the Astropy ecosystem stores column metadata, datatypes, and units in a YAML header preceding tabular data rows. These formats demonstrate the practicality and usefulness of combining lightweight structured metadata with human-readable tabular text.
+
+Earlier precedents exist in domain-specific table formats such as the IPAC Table Format and FITS tables used in astronomy. These formats embed metadata describing column structure and interpretation within the same file as the data, reflecting a long-standing recognition that self-describing datasets improve portability and reuse.
+
+The present proposal differs from these approaches primarily in its deliberate restriction of metadata structure. Rather than adopting YAML or similar general-purpose serialisation languages, it uses a constrained INI-style metadata representation intended to minimise syntactic complexity while preserving human readability and ease of implementation.
+
+An alternative strategy is to store metadata separately from tabular data files. The Frictionless Data specifications define Table Schema and Data Package formats for describing tabular datasets using JSON metadata. These specifications provide lightweight schema validation and packaging mechanisms and have seen adoption in data publishing workflows. However, they are primarily designed to describe collections of files rather than individual self-contained datasets.
+
+Similarly, the Data Documentation Initiative (DDI) provides a comprehensive XML-based framework for describing social-science datasets. While highly expressive and widely used in archival contexts, DDI addresses a broader problem than the one considered here and introduces substantially greater structural complexity.
+
+Although sidecar metadata formats provide advantages for managing collections of related datasets, they introduce the risk that metadata may become separated from the data files they describe. In contexts involving long-term storage, file transfer, or ad hoc data sharing, embedding essential metadata within the data file itself improves robustness and portability.
+
+These approaches try to solve the general problem of metadata, and a consequently feature rich, but that results in complexity. IncCSV aims to provide an interface that is only marginally more complex than the CSV package itself to encourage more universal incorporation of metadata. 
+
+The guiding principle of the approach is that most tabular datasets require only a small, shallow metadata structure and that simplicity promotes adoption. By combining a restricted INI-style metadata header with a conventional delimiter-separated data section, the format aims to provide a practical balance between expressiveness, portability, and ease of use for the common case of standalone tabular datasets.
+
