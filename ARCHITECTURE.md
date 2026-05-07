@@ -16,8 +16,8 @@ CSV.jl, TOML, YAML, JSON, XML, Frictionless Data, or a full metadata catalogue.
 - Keep the format readable by people using ordinary text editors.
 - Reuse CSV.jl for CSV parsing and writing.
 - Keep metadata parsing small, predictable, and easy to inspect.
-- Prefer explicit behavior over clever inference.
-- Preserve ordinary CSV workflows wherever possible.
+- Prefer explicit (restricted) behavior over clever inference.
+- Preserve ordinary CSV workflows wherever possible, including backward compatibility with simple CSV files without metadata.
 - Avoid expanding the metadata language into a general configuration language.
 
 ## File Model
