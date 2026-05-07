@@ -31,7 +31,7 @@ can be found here [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)]
 
 
 
-It is worth repeating the core principles, *i.e.,* safety and simplicty, so: 
+It is worth repeating the core principles, *i.e.,* safety, portability and simplicty, so: 
 
 - Keep the format readable by people using ordinary text editors.
 - Reuse CSV.jl for CSV parsing and writing.
