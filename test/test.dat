@@ -1,0 +1,9 @@
+---
+source = unit test
+title = demo data
+[columns]
+score = points
+---
+name,score
+Ada,10
+Babbage,12

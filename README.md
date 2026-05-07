@@ -1,5 +1,21 @@
 # IncCSV.jl
 
+INC is
+
+    INi-Csv
+
+or
+
+    Ini - aNd - Csv
+
+or
+
+    INCluded metadata
+
+or
+
+    Intrinsic aNd Connate metadata
+
 IncCSV is a small layer over CSV.jl for CSV files with included metadata.
 
 INC files are assumed to be UTF-8 encoded text.
