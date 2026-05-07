@@ -38,7 +38,7 @@ It is worth repeating the core principles, *i.e.,* safety and simplicty, so:
 - Preserve ordinary CSV workflows wherever possible, including backward compatibility with simple CSV files without metadata.
 - Avoid expanding the metadata language into a general configuration language.
 
-and the non-goals are: 
+and the non-goals are:  
 
 - a general-purpose metadata standard,
 - a full schema validation language,
