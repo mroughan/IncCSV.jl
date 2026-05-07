@@ -1,14 +1,12 @@
 # IncCSV.jl
 
-IncCSV is a small layer over CSV.jl for CSV files with included metadata.
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mroughan.github.io/IncCSV.jl/stable)
 
-INC is **INi-Csv**
+IncCSV is a small layer over CSV.jl to include metadata into  CSV files.
 
-  or **Ini - aNd - Csv**
-
-  or **INCluded metadata**
-
-  or **Intrinsic aNd Connate metadata**
+INC is **IN**i+**C**sv or **I**ni - a**N**d - **C**sv
+ or **INC**luded metadata
+ or **I**ntrinsic a**N**d **C**onnate metadata
 
 An INC file is just a metadata part (in INI file format) followed by a data part (in CSV format). For example:
 
@@ -26,7 +24,9 @@ time,temperature
 The package is intended to provide a very lighweight method to handle a very common case: simple metadata that describes tabular data. 
 
 The package's design commitments are recorded in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+[`ARCHITECTURE.md`](ARCHITECTURE.md) and full documentation 
+can be found here [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mroughan.github.io/IncCSV.jl/stable).
+
 
 
 It is worth repeating the core principles, *i.e.,* safety and simplicty, so: 
