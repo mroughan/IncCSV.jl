@@ -1,20 +1,12 @@
 # IncCSV.jl
 
-INC is
+INC is **INi-Csv**
 
-    INi-Csv
+or **Ini - aNd - Csv**
 
-or
+or **INCluded metadata**
 
-    Ini - aNd - Csv
-
-or
-
-    INCluded metadata
-
-or
-
-    Intrinsic aNd Connate metadata
+or **Intrinsic aNd Connate metadata**
 
 IncCSV is a small layer over CSV.jl for CSV files with included metadata.
 
