@@ -1,6 +1,8 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 IncCSV = "66f2fdda-89f9-4824-87f0-56b432c695d5"
+OpenSSL_jll = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
 
 [compat]
 Documenter = "1"
+OpenSSL_jll = "3.0"
