@@ -16,9 +16,9 @@ makedocs(
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://matthew.roughan@adelaide.edu.au.github.io/IncCSV.jl",
         assets=String[],
-     ),
+    ),
     pages=[
-        "Home" => "index.md",
+        "Home" => "index.md", 
         "Metadata Grammar" => "metadata.md",
         "Mini Schema" => "schema.md",
         "API" => "api.md",

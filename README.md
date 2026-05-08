@@ -1,6 +1,6 @@
 # IncCSV.jl
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mroughan.github.io/IncCSV.jl/stable)
+[![Stable](https://img.shields.io/badge/docs-dev-blue.svg)](https://mroughan.github.io/IncCSV.jl/dev)
 
 IncCSV is a small layer over CSV.jl to include metadata into  CSV files, resulting in what we call INC files. It is simple, lightweight, pragmatic and intended to be useful to everyday users who currently use CSV files, and should include some metadata, but shy away from more complicated ways to do so. 
 
@@ -31,7 +31,7 @@ The package is intended to provide a very lightweight method to handle a very co
 
 The package's design commitments are recorded in
 [`ARCHITECTURE.md`](ARCHITECTURE.md) and full documentation 
-can be found here [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mroughan.github.io/IncCSV.jl/stable).
+can be found here [![Stable](https://img.shields.io/badge/docs-dev-blue.svg)](https://mroughan.github.io/IncCSV.jl/dev).
 
 
 
