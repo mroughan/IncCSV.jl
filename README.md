@@ -6,7 +6,7 @@ IncCSV is a small layer over CSV.jl to include metadata into  CSV files, resulti
 
 INC is **IN**i+**C**sv or **I**ni - a**N**d - **C**sv
  or **INC**luded metadata
- or **I**ntrinsic a**N**d **C**onnate metadata
+ or **I**ntrinsic a**N**d **C**onnate metadata.
 
 INC is motivated by the observations that 
 + CSV (or one of the related formats) is incredibly successful as a data format because we often think in terms of tabular data, and 
