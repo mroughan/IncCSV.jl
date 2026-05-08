@@ -2,7 +2,7 @@
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mroughan.github.io/IncCSV.jl/stable)
 
-IncCSV is a small layer over CSV.jl to include metadata into  CSV files, which we call INC files. It is simple, lightweight, pragmatic and intended to be useful to everyday users who currently use CSV files, and should include some metadata, but shy away from more complicated ways to do so. 
+IncCSV is a small layer over CSV.jl to include metadata into  CSV files, resulting in what we call INC files. It is simple, lightweight, pragmatic and intended to be useful to everyday users who currently use CSV files, and should include some metadata, but shy away from more complicated ways to do so. 
 
 INC is **IN**i+**C**sv or **I**ni - a**N**d - **C**sv
  or **INC**luded metadata
