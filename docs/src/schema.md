@@ -72,3 +72,6 @@ A permissive default schema of common discovery, preservation, technical,
 rights, structure, parameter, statistical, and process terms is available at
 `artifacts/examples/default_schema.inc`. It contains no `MUST` fields and is
 intended as a starting point for documentation and light reporting.
+
+The package tutorial at `artifacts/examples/tutorial.jl` shows this default
+schema in use alongside ordinary reading and writing.

@@ -19,6 +19,7 @@ using Tables
     default_schema_inc = joinpath(example_dir, "default_schema.inc")
     metadata_schema_inc = joinpath(example_dir, "metadata_schema.inc")
     missing_required_inc = joinpath(example_dir, "missing_required.inc")
+    tutorial_jl = joinpath(example_dir, "tutorial.jl")
     schema_examples_dir = normpath(joinpath(@__DIR__, "..", "artifacts", "schema_examples"))
     rows = [(name="Ada", score=21), (name="Babbage", score=12), (name="Church", score=14), (name="Dijkstra", score=15)]
     names = ["Ada", "Babbage", "Church", "Dijkstra"]
@@ -279,6 +280,23 @@ using Tables
         @test report.valid
         @test isempty(report.missing)
         @test "columns" in report.extra
+    end
+
+    @testset "Examples tutorial" begin
+        # Run the tutorial script and check the values it reports.
+        tutorial = Base.include(Module(), tutorial_jl)
+
+        @test tutorial.demo_title == "demo data"
+        @test tutorial.demo_rows == 4
+        @test tutorial.demo_score_units == "points"
+        @test tutorial.structured_title == "Tab-delimited data"
+        @test tutorial.structured_delim == "tab"
+        @test tutorial.structured_rows == 2
+        @test tutorial.schema_valid
+        @test "columns" in tutorial.schema_extra
+        @test tutorial.roundtrip_title == "Tutorial output"
+        @test tutorial.roundtrip_rows == 2
+        @test tutorial.roundtrip_units == "Celsius"
     end
 
     @testset "Schema example suites" begin

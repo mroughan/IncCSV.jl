@@ -40,7 +40,7 @@ It is worth repeating the core principles, *i.e.,* safety, portability and simpl
 - Preserve ordinary CSV workflows wherever possible, including backward compatibility with simple CSV files without metadata.
 - Avoid expanding the metadata language into a general configuration language.
 
-and the non-goals are:  
+and the **non-goals** are:  
 
 - a general-purpose metadata standard,
 - a full schema validation language,
@@ -65,6 +65,13 @@ override `[structure]` values.
 
 Examples of semicolon-, tab-, and pipe-delimited INC files live in
 `artifacts/examples`.
+
+A short runnable tutorial is provided at `artifacts/examples/tutorial.jl`.
+From the package root, run:
+
+```sh
+julia --project=. artifacts/examples/tutorial.jl
+```
 
 A permissive default schema of common metadata terms is provided at
 `artifacts/examples/default_schema.inc`.
@@ -110,7 +117,9 @@ writeinc(
 )
 ```
 
-Small checked-in example files live in `artifacts/examples`.
+Small checked-in example files live in `artifacts/examples`; start with
+`artifacts/examples/tutorial.jl` for a compact read, validate, and write
+walkthrough.
 
 ## Disclosure
 
@@ -135,4 +144,3 @@ Although sidecar metadata formats provide advantages for managing collections of
 These approaches try to solve the general problem of metadata, and a consequently feature rich, but that results in complexity. IncCSV aims to provide an interface that is only marginally more complex than the CSV package itself to encourage more universal incorporation of metadata. 
 
 The guiding principle of the approach is that most tabular datasets require only a small, shallow metadata structure and that simplicity promotes adoption. By combining a restricted INI-style metadata header with a conventional delimiter-separated data section, the format aims to provide a practical balance between expressiveness, portability, and ease of use for the common case of standalone tabular datasets.
-

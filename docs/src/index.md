@@ -64,6 +64,13 @@ metadata.
 Checked-in examples include semicolon, tab, and pipe delimiters in
 `artifacts/examples`.
 
+A compact tutorial script lives at `artifacts/examples/tutorial.jl`. From the
+package root, run:
+
+```sh
+julia --project=. artifacts/examples/tutorial.jl
+```
+
 ```julia
 using IncCSV
 
