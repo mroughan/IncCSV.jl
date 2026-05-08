@@ -25,6 +25,7 @@ using IncCSV
 file = readinc("artifacts/examples/demo.inc", DataFrame)
 metadata(file)
 table(file)
+summarise(file)
 ```
 
 ## Basic Files

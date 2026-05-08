@@ -99,6 +99,7 @@ using IncCSV
 file = readinc("example.inc")
 metadata(file)["title"]
 table(file)
+summarise(file)
 ```
 
 Plain CSV files can also be read with `readinc`; they simply return empty

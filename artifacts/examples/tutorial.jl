@@ -3,6 +3,7 @@ using IncCSV
 
 function incsv_tutorial_report(example_dir::AbstractString=@__DIR__)
     demo = readinc(joinpath(example_dir, "demo.inc"), DataFrame)
+    demo_summary = summarise(demo; source=joinpath(example_dir, "demo.inc"))
     structured = readinc(joinpath(example_dir, "structured_tsv.inc"), DataFrame)
     schema = readschema(joinpath(example_dir, "default_schema.inc"))
     schema_report = validateschema(demo, schema)
@@ -27,6 +28,7 @@ function incsv_tutorial_report(example_dir::AbstractString=@__DIR__)
         demo_title=metadata(demo)["title"],
         demo_rows=nrow(table(demo)),
         demo_score_units=metadata(demo)["columns"]["score"],
+        demo_summary=demo_summary,
         structured_title=metadata(structured)["title"],
         structured_delim=metadata(structured)["structure"]["delim"],
         structured_rows=nrow(table(structured)),
@@ -43,6 +45,9 @@ function print_incsv_tutorial_report(report)
     println("structure example: ", report.structured_title, " uses delim = ", report.structured_delim)
     println("default schema valid: ", report.schema_valid)
     println("roundtrip: ", report.roundtrip_title, " (", report.roundtrip_rows, " rows)")
+    println()
+    printsummary(report.demo_summary)
+    println()
 end
 
 report = incsv_tutorial_report()

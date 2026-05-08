@@ -5,7 +5,7 @@ using Tables
 
 import DataAPI: metadata
 
-export IncFile, IncSchema, SchemaValidation, metadata, table, readinc, readschema, validateschema, writeinc
+export IncFile, IncSchema, IncSummary, SchemaValidation, metadata, table, readinc, readschema, summarise, printsummary, validateschema, writeinc
 
 """
     IncFile(metadata, table; csv_start=1)
@@ -29,6 +29,10 @@ struct IncFile{M,T}
 end
 
 IncFile(metadata, table; csv_start::Integer=1) = IncFile(metadata, table, Int(csv_start))
+
+const MetadataValue = Union{Int,String}
+const MetadataSection = Dict{String,MetadataValue}
+const Metadata = Dict{String,Union{MetadataValue,MetadataSection}}
 
 """
     IncSchema(fields; allow_extra=true)
@@ -69,6 +73,25 @@ struct SchemaValidation
 end
 
 """
+    IncSummary(source, title, rows, columns, metadata_fields, csv_start)
+
+Small summary returned by [`summarise`](@ref).
+
+The summary records the source path when available, a title if the metadata has
+one, row and column information from the CSV component, metadata field paths,
+and the line where CSV data starts. Display an `IncSummary` or pass it to
+[`printsummary`](@ref) for a compact human-readable report.
+"""
+struct IncSummary
+    source::Union{Nothing,String}
+    title::Union{Nothing,MetadataValue}
+    rows::Int
+    columns::Vector{String}
+    metadata_fields::Vector{String}
+    csv_start::Int
+end
+
+"""
     metadata(file::IncFile)
 
 Return the metadata dictionary parsed from an INC file.
@@ -104,10 +127,6 @@ table(file)
 ```
 """
 table(file::IncFile) = file.table
-
-const MetadataValue = Union{Int,String}
-const MetadataSection = Dict{String,MetadataValue}
-const Metadata = Dict{String,Union{MetadataValue,MetadataSection}}
 
 isdelimiter(line::AbstractString) = occursin(r"^\s*\p{Pd}{3,}\s*(?:[#;].*)?$", line)
 
@@ -332,6 +351,130 @@ function hasfieldpath(meta::AbstractDict, path::AbstractString)
 
     return false
 end
+
+function tablerows(data)
+    rows = Tables.rows(data)
+
+    try
+        return length(rows)
+    catch
+        count = 0
+        for _ in rows
+            count += 1
+        end
+        return count
+    end
+end
+
+function tablecolumns(data)
+    schema = Tables.schema(data)
+    if schema !== nothing && schema.names !== nothing
+        return string.(collect(schema.names))
+    end
+
+    columns = Tables.columns(data)
+    return string.(collect(Tables.columnnames(columns)))
+end
+
+summarytitle(meta::AbstractDict) = get(meta, "title", nothing)
+
+"""
+    summarise(file::IncFile; source=nothing)
+    summarise(path; csvkwargs...)
+    summarise(path, sink; csvkwargs...)
+
+Return an [`IncSummary`](@ref) for an INC file.
+
+The summary is intentionally shallow: it reports the source path when known,
+the `title` metadata value when present, row and column counts from the CSV
+component, metadata field paths, and the line where CSV data starts. The table
+is still parsed by CSV.jl through [`readinc`](@ref), so `[structure]` metadata
+and explicit CSV keyword arguments are handled in the usual way.
+
+# Example
+
+```julia
+summary = summarise("example.inc", DataFrame)
+printsummary(summary)
+```
+"""
+function summarise(file::IncFile; source=nothing)
+    return IncSummary(
+        source === nothing ? nothing : String(source),
+        summarytitle(metadata(file)),
+        tablerows(table(file)),
+        tablecolumns(table(file)),
+        fieldpaths(metadata(file)),
+        file.csv_start,
+    )
+end
+
+function summarise(path::AbstractString; csvkwargs...)
+    return summarise(readinc(path; csvkwargs...); source=path)
+end
+
+function summarise(path::AbstractString, sink; csvkwargs...)
+    return summarise(readinc(path, sink; csvkwargs...); source=path)
+end
+
+"""
+    printsummary([io], summary::IncSummary)
+    printsummary([io], file::IncFile; source=nothing)
+    printsummary([io], path, [sink]; csvkwargs...)
+
+Pretty print a compact summary of an INC file.
+
+When passed a path, `printsummary` reads the file with [`readinc`](@ref) and
+then prints the resulting summary. It returns the summary object, so it can be
+used both for display and for programmatic checks.
+"""
+function printsummary(io::IO, summary::IncSummary)
+    println(io, "INC summary")
+
+    if summary.source !== nothing
+        println(io, "  source: ", summary.source)
+    end
+
+    if summary.title !== nothing
+        println(io, "  title: ", summary.title)
+    end
+
+    println(io, "  rows: ", summary.rows)
+    println(io, "  columns: ", isempty(summary.columns) ? "(none)" : join(summary.columns, ", "))
+    println(io, "  metadata fields: ", isempty(summary.metadata_fields) ? "(none)" : join(summary.metadata_fields, ", "))
+    print(io, "  CSV starts at line: ", summary.csv_start)
+
+    return summary
+end
+
+printsummary(summary::IncSummary) = printsummary(stdout, summary)
+
+function printsummary(io::IO, file::IncFile; source=nothing)
+    return printsummary(io, summarise(file; source))
+end
+
+function printsummary(file::IncFile; source=nothing)
+    return printsummary(stdout, file; source)
+end
+
+function printsummary(io::IO, path::AbstractString; csvkwargs...)
+    return printsummary(io, summarise(path; csvkwargs...))
+end
+
+function printsummary(path::AbstractString; csvkwargs...)
+    return printsummary(stdout, path; csvkwargs...)
+end
+
+function printsummary(io::IO, path::AbstractString, sink; csvkwargs...)
+    return printsummary(io, summarise(path, sink; csvkwargs...))
+end
+
+function printsummary(path::AbstractString, sink; csvkwargs...)
+    return printsummary(stdout, path, sink; csvkwargs...)
+end
+
+Base.show(io::IO, summary::IncSummary) = printsummary(io, summary)
+Base.show(io::IO, ::MIME"text/plain", summary::IncSummary) = printsummary(io, summary)
 
 """
     validateschema(metadata, schema::IncSchema)

@@ -282,6 +282,34 @@ using Tables
         @test "columns" in report.extra
     end
 
+    @testset "INC summary" begin
+        # Summarise metadata and table shape for display or quick inspection.
+        summary = summarise(demo_inc, DataFrame)
+
+        @test summary isa IncSummary
+        @test summary.source == demo_inc
+        @test summary.title == "demo data"
+        @test summary.rows == 4
+        @test summary.columns == ["name", "score"]
+        @test summary.csv_start == 9
+        @test summary.metadata_fields == ["columns", "columns.score", "offset", "source", "title", "version"]
+
+        text = sprint(printsummary, summary)
+
+        @test occursin("INC summary", text)
+        @test occursin("title: demo data", text)
+        @test occursin("rows: 4", text)
+        @test occursin("columns: name, score", text)
+
+        file_summary = summarise(readinc(plain_csv, DataFrame))
+
+        @test file_summary.source === nothing
+        @test file_summary.title === nothing
+        @test file_summary.rows == 4
+        @test file_summary.metadata_fields == String[]
+        @test occursin("metadata fields: (none)", sprint(printsummary, file_summary))
+    end
+
     @testset "Examples tutorial" begin
         # Run the tutorial script and check the values it reports.
         tutorial = Base.include(Module(), tutorial_jl)
@@ -289,6 +317,8 @@ using Tables
         @test tutorial.demo_title == "demo data"
         @test tutorial.demo_rows == 4
         @test tutorial.demo_score_units == "points"
+        @test tutorial.demo_summary isa IncSummary
+        @test tutorial.demo_summary.rows == 4
         @test tutorial.structured_title == "Tab-delimited data"
         @test tutorial.structured_delim == "tab"
         @test tutorial.structured_rows == 2

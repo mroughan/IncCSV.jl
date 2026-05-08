@@ -77,6 +77,7 @@ using IncCSV
 file = readinc("example.inc")
 metadata(file)["title"]
 table(file)
+summarise(file)
 ```
 
 ```julia
