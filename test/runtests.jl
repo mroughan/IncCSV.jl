@@ -13,17 +13,24 @@ using Tables
     commented_inc = joinpath(example_dir, "commented.inc")
     unicode_inc = joinpath(example_dir, "unicode.inc")
     unicode_delimiter_inc = joinpath(example_dir, "unicode_delimiter.inc")
+    parser_edge_cases_inc = joinpath(example_dir, "parser_edge_cases.inc")
+    escaped_metadata_inc = joinpath(example_dir, "escaped_metadata.inc")
     structured_semicolon_inc = joinpath(example_dir, "structured_semicolon.inc")
     structured_tsv_inc = joinpath(example_dir, "structured_tsv.inc")
     structured_pipe_inc = joinpath(example_dir, "structured_pipe.inc")
+    structured_delimiter_alias_inc = joinpath(example_dir, "structured_delimiter_alias.inc")
+    structured_delimiter_precedence_inc = joinpath(example_dir, "structured_delimiter_precedence.inc")
     default_schema_inc = joinpath(example_dir, "default_schema.inc")
     metadata_schema_inc = joinpath(example_dir, "metadata_schema.inc")
     missing_required_inc = joinpath(example_dir, "missing_required.inc")
     tutorial_jl = joinpath(example_dir, "tutorial.jl")
+    invalid_example_dir = normpath(joinpath(@__DIR__, "..", "artifacts", "invalid_examples"))
     schema_examples_dir = normpath(joinpath(@__DIR__, "..", "artifacts", "schema_examples"))
     rows = [(name="Ada", score=21), (name="Babbage", score=12), (name="Church", score=14), (name="Dijkstra", score=15)]
     names = ["Ada", "Babbage", "Church", "Dijkstra"]
     scores = [21, 12, 14, 15]
+    demo_names = ["Ada", "Babbage", "Church", "Missing", "Dijkstra"]
+    demo_scores = Union{Missing,Int}[21, 12, 14, missing, 15]
     meta = Dict(
         "title" => "demo data",
         "source" => "unit test",
@@ -39,10 +46,11 @@ using Tables
         @test metadata(file)["source"] == "package artifact"
         @test metadata(file)["version"] == 1
         @test metadata(file)["offset"] == -3
+        @test metadata(file)["empty_field"] == ""
         @test metadata(file)["columns"]["score"] == "points"
-        @test columns.name == names
-        @test columns.score == scores
-        @test file.csv_start == 9
+        @test columns.name == demo_names
+        @test isequal(columns.score, demo_scores)
+        @test file.csv_start == 10
     end
 
     @testset "Plain CSV fallback" begin
@@ -62,8 +70,8 @@ using Tables
 
         @test metadata(dataframe_file)["title"] == "demo data"
         @test table(dataframe_file) isa DataFrame
-        @test table(dataframe_file).name == names
-        @test table(dataframe_file).score == scores
+        @test table(dataframe_file).name == demo_names
+        @test isequal(table(dataframe_file).score, demo_scores)
     end
 
     @testset "DataFrame artifact" begin
@@ -91,6 +99,91 @@ using Tables
         @test table(file).score == scores
     end
 
+    @testset "Metadata parser edge cases" begin
+        # Parse literal comment markers and escaped characters predictably.
+        file = readinc(parser_edge_cases_inc, DataFrame)
+
+        @test metadata(file)["title"] == "Parser edge cases"
+        @test metadata(file)["semicolon"] == ";"
+        @test metadata(file)["hash"] == "#"
+        @test metadata(file)["commented"] == "value"
+        @test metadata(file)["not_comment"] == "value#not comment"
+        @test metadata(file)["backslash"] == "a\\;b"
+        @test metadata(file)["quoted"] == "a # b; c \"q\" \\ slash"
+        @test metadata(file)["section"]["key"] == "value"
+        @test table(file).name == ["Ada"]
+        @test table(file).score == [21]
+
+        empty_section_path = joinpath(dir, "empty_section.inc")
+        write(
+            empty_section_path,
+            "---\n" *
+            "[empty]\n" *
+            "---\n" *
+            "name,score\n" *
+            "Ada,21\n",
+        )
+        @test_throws ArgumentError readinc(empty_section_path)
+
+        missing_close_path = joinpath(dir, "missing_closing_delimiter.inc")
+        write(
+            missing_close_path,
+            "---\n" *
+            "title = missing delimiter\n" *
+            "[columns]\n" *
+            "score = points\n",
+        )
+        err = try
+            readinc(missing_close_path)
+            nothing
+        catch e
+            e
+        end
+
+        @test err isa ArgumentError
+        @test occursin(missing_close_path, sprint(showerror, err))
+        @test occursin("line 4", sprint(showerror, err))
+    end
+
+    @testset "Invalid example artifacts" begin
+        # Checked-in invalid examples each demonstrate one rejected behavior.
+        invalid_readinc_files = [
+            "empty_section.inc",
+            "invalid_key.inc",
+            "invalid_section_name.inc",
+            "missing_closing_delimiter.inc",
+            "repeated_key.inc",
+            "invalid_section_key.inc",
+            "structure_invalid_bool.inc",
+            "structure_invalid_char.inc",
+            "unsupported_structure_key.inc",
+        ]
+
+        for name in invalid_readinc_files
+            @test_throws ArgumentError readinc(joinpath(invalid_example_dir, name), DataFrame)
+        end
+
+        invalid_schema_files = [
+            "schema_duplicate_requirement.inc",
+            "schema_duplicate_alias_requirement.inc",
+            "schema_deep_path.inc",
+        ]
+
+        for name in invalid_schema_files
+            @test_throws ArgumentError readschema(joinpath(invalid_example_dir, name))
+        end
+
+        err = try
+            readinc(joinpath(invalid_example_dir, "missing_closing_delimiter.inc"))
+            nothing
+        catch e
+            e
+        end
+
+        @test err isa ArgumentError
+        @test occursin("missing_closing_delimiter.inc", sprint(showerror, err))
+    end
+
     @testset "Structure CSV options" begin
         # Use [structure] metadata to pass CSV.jl parsing options.
         file = readinc(structured_semicolon_inc, DataFrame)
@@ -113,6 +206,20 @@ using Tables
         @test metadata(pipe_file)["structure"]["delim"] == "|"
         @test table(pipe_file).name == ["Ada", "Babbage"]
         @test table(pipe_file).score == [21, 12]
+
+        delimiter_file = readinc(structured_delimiter_alias_inc, DataFrame)
+
+        @test metadata(delimiter_file)["title"] == "Delimiter alias data"
+        @test metadata(delimiter_file)["structure"]["delimiter"] == ";"
+        @test table(delimiter_file).name == ["Ada"]
+        @test table(delimiter_file).score == [21]
+
+        delimiter_precedence_file = readinc(structured_delimiter_precedence_inc, DataFrame)
+
+        @test metadata(delimiter_precedence_file)["structure"]["delim"] == ","
+        @test metadata(delimiter_precedence_file)["structure"]["delimiter"] == ";"
+        @test table(delimiter_precedence_file).name == ["Ada"]
+        @test table(delimiter_precedence_file).score == [21]
 
         explicit_path = joinpath(dir, "explicit_delim_override.inc")
         write(
@@ -229,6 +336,61 @@ using Tables
         )
     end
 
+    @testset "Metadata writer validation" begin
+        # Write only metadata the reader can parse back safely.
+        artifact_file = readinc(escaped_metadata_inc, DataFrame)
+
+        @test metadata(artifact_file)["path"] == "C:\\tmp\\file"
+        @test metadata(artifact_file)["quote"] == "say\"hi"
+        @test metadata(artifact_file)["columns"]["note"] == "\"quoted\" value"
+        @test table(artifact_file).name == ["Ada"]
+        @test table(artifact_file).score == [21]
+
+        path = joinpath(dir, "escaped_metadata.inc")
+        escaped_meta = Dict(
+            "quote" => "say\"hi",
+            "slash" => "back\\slash",
+            "columns" => Dict("path" => "C:\\tmp\\file", "quote" => "\"unit\""),
+        )
+        writeinc(path, rows; metadata=escaped_meta)
+        file = readinc(path)
+
+        @test metadata(file)["quote"] == "say\"hi"
+        @test metadata(file)["slash"] == "back\\slash"
+        @test metadata(file)["columns"]["path"] == "C:\\tmp\\file"
+        @test metadata(file)["columns"]["quote"] == "\"unit\""
+
+        ordered_path = joinpath(dir, "ordered_metadata.inc")
+        ordered_meta = Dict(
+            "z" => 1,
+            "a" => 2,
+            "bsec" => Dict("z" => 1, "a" => 2),
+            "asec" => Dict("b" => 2, "a" => 1),
+        )
+        writeinc(ordered_path, rows; metadata=ordered_meta)
+        ordered_lines = readlines(ordered_path)
+
+        @test ordered_lines[1:11] == [
+            "---",
+            "a = 2",
+            "z = 1",
+            "[asec]",
+            "a = 1",
+            "b = 2",
+            "",
+            "[bsec]",
+            "a = 2",
+            "z = 1",
+            "---",
+        ]
+
+        @test_throws ArgumentError writeinc(joinpath(dir, "newline_metadata.inc"), rows; metadata=Dict("note" => "a\nb"))
+        @test_throws ArgumentError writeinc(joinpath(dir, "invalid_key_metadata.inc"), rows; metadata=Dict("bad key" => "value"))
+        @test_throws ArgumentError writeinc(joinpath(dir, "invalid_section_metadata.inc"), rows; metadata=Dict("bad=section" => Dict("key" => "value")))
+        @test_throws ArgumentError writeinc(joinpath(dir, "invalid_section_key_metadata.inc"), rows; metadata=Dict("section" => Dict("bad key" => "value")))
+        @test_throws ArgumentError writeinc(joinpath(dir, "empty_section_metadata.inc"), rows; metadata=Dict("section" => Dict{String,String}()))
+    end
+
     @testset "Metadata mini-schema" begin
         # Validate MUST fields and report allowed-but-not-guaranteed extras.
         schema = readschema(metadata_schema_inc)
@@ -238,25 +400,149 @@ using Tables
         @test schema.fields["title"].description == "Human-readable dataset title"
         @test schema.fields["columns.score"].requirement == :must
         @test schema.fields["columns.score"].type == "String"
-        @test schema.fields["city"].requirement == :maybe
+        @test schema.fields["city"].requirement == :optional
+        @test schema.fields["empty_field"].requirement == :optional
+        @test schema.fields["password"].requirement == :must_not
+        @test schema.fields["password"].description == "Secrets must not be stored as file metadata"
 
         valid_report = validateschema(demo_inc, schema)
 
         @test valid_report.valid
         @test isempty(valid_report.missing)
         @test isempty(valid_report.extra)
+        @test isempty(valid_report.forbidden)
 
         extra_report = validateschema(commented_inc, schema)
 
         @test extra_report.valid
         @test isempty(extra_report.missing)
         @test "string_number" in extra_report.extra
+        @test isempty(extra_report.forbidden)
 
         missing_report = validateschema(missing_required_inc, schema)
 
         @test !missing_report.valid
         @test missing_report.missing == ["source"]
         @test isempty(missing_report.extra)
+        @test isempty(missing_report.forbidden)
+
+        forbidden_path = joinpath(dir, "forbidden_schema_field.inc")
+        write(
+            forbidden_path,
+            "---\n" *
+            "title = Forbidden metadata\n" *
+            "source = unit test\n" *
+            "password = secret\n" *
+            "[columns]\n" *
+            "score = points\n" *
+            "---\n" *
+            "name,score\n" *
+            "Ada,21\n",
+        )
+        forbidden_report = validateschema(forbidden_path, schema)
+
+        @test !forbidden_report.valid
+        @test isempty(forbidden_report.missing)
+        @test isempty(forbidden_report.extra)
+        @test forbidden_report.forbidden == ["password"]
+    end
+
+    @testset "Schema validation edge cases" begin
+        # Reject ambiguous schemas and treat declared child paths as declaring their parent section.
+        duplicate_path = joinpath(dir, "duplicate_schema_field.inc")
+        write(
+            duplicate_path,
+            "---\n" *
+            "[MUST]\n" *
+            "title = String\n" *
+            "[OPTIONAL]\n" *
+            "title = String\n" *
+            "---\n",
+        )
+        @test_throws ArgumentError readschema(duplicate_path)
+
+        duplicate_alias_path = joinpath(dir, "duplicate_schema_alias_field.inc")
+        write(
+            duplicate_alias_path,
+            "---\n" *
+            "[REQUIRED]\n" *
+            "title = String\n" *
+            "[SHALL]\n" *
+            "title = String\n" *
+            "---\n",
+        )
+        @test_throws ArgumentError readschema(duplicate_alias_path)
+
+        deep_path = joinpath(dir, "deep_schema_field.inc")
+        write(
+            deep_path,
+            "---\n" *
+            "[MUST]\n" *
+            "a.b.c = String\n" *
+            "---\n",
+        )
+        @test_throws ArgumentError readschema(deep_path)
+
+        parent_schema_path = joinpath(dir, "parent_section_schema.inc")
+        write(
+            parent_schema_path,
+            "---\n" *
+            "[schema]\n" *
+            "allow_extra = false\n" *
+            "[MUST]\n" *
+            "columns.score = String\n" *
+            "---\n",
+        )
+        parent_file_path = joinpath(dir, "parent_section_file.inc")
+        write(
+            parent_file_path,
+            "---\n" *
+            "[columns]\n" *
+            "score = points\n" *
+            "---\n" *
+            "name,score\n" *
+            "Ada,21\n",
+        )
+        report = validateschema(parent_file_path, readschema(parent_schema_path))
+
+        @test report.valid
+        @test isempty(report.missing)
+        @test isempty(report.extra)
+        @test isempty(report.forbidden)
+    end
+
+    @testset "RFC 2119 schema aliases" begin
+        # Accept read-only aliases while storing canonical requirement symbols.
+        alias_schema_path = joinpath(dir, "rfc_2119_alias_schema.inc")
+        write(
+            alias_schema_path,
+            "---\n" *
+            "[REQUIRED]\n" *
+            "title = String\n" *
+            "[SHALL]\n" *
+            "source = String\n" *
+            "[SHALL_NOT]\n" *
+            "password = String\n" *
+            "[MAY]\n" *
+            "city = String\n" *
+            "[description]\n" *
+            "source = Where the data came from\n" *
+            "password = Secrets must not be stored as file metadata\n" *
+            "---\n",
+        )
+        schema = readschema(alias_schema_path)
+
+        @test schema.fields["title"].requirement == :must
+        @test schema.fields["source"].requirement == :must
+        @test schema.fields["source"].description == "Where the data came from"
+        @test schema.fields["password"].requirement == :must_not
+        @test schema.fields["city"].requirement == :optional
+
+        report = validateschema(demo_inc, schema)
+
+        @test report.valid
+        @test isempty(report.missing)
+        @test isempty(report.forbidden)
     end
 
     @testset "Default metadata schema" begin
@@ -265,7 +551,7 @@ using Tables
 
         @test schema.allow_extra
         @test isempty([path for (path, field) in schema.fields if field.requirement == :must])
-        @test schema.fields["identifier"].requirement == :maybe
+        @test schema.fields["identifier"].requirement == :optional
         @test schema.fields["identifier"].type == "IdentifierString"
         @test schema.fields["preservation.language"].type == "LanguageString"
         @test schema.fields["rights.license"].type == "LicenseString"
@@ -280,6 +566,7 @@ using Tables
         @test report.valid
         @test isempty(report.missing)
         @test "columns" in report.extra
+        @test isempty(report.forbidden)
     end
 
     @testset "INC summary" begin
@@ -289,16 +576,16 @@ using Tables
         @test summary isa IncSummary
         @test summary.source == demo_inc
         @test summary.title == "demo data"
-        @test summary.rows == 4
+        @test summary.rows == 5
         @test summary.columns == ["name", "score"]
-        @test summary.csv_start == 9
-        @test summary.metadata_fields == ["columns", "columns.score", "offset", "source", "title", "version"]
+        @test summary.csv_start == 10
+        @test summary.metadata_fields == ["columns", "columns.score", "empty_field", "offset", "source", "title", "version"]
 
         text = sprint(printsummary, summary)
 
         @test occursin("INC summary", text)
         @test occursin("title: demo data", text)
-        @test occursin("rows: 4", text)
+        @test occursin("rows: 5", text)
         @test occursin("columns: name, score", text)
 
         file_summary = summarise(readinc(plain_csv, DataFrame))
@@ -315,10 +602,10 @@ using Tables
         tutorial = Base.include(Module(), tutorial_jl)
 
         @test tutorial.demo_title == "demo data"
-        @test tutorial.demo_rows == 4
+        @test tutorial.demo_rows == 5
         @test tutorial.demo_score_units == "points"
         @test tutorial.demo_summary isa IncSummary
-        @test tutorial.demo_summary.rows == 4
+        @test tutorial.demo_summary.rows == 5
         @test tutorial.structured_title == "Tab-delimited data"
         @test tutorial.structured_delim == "tab"
         @test tutorial.structured_rows == 2
@@ -337,6 +624,7 @@ using Tables
         @test all(report -> report.valid, restrictive)
         @test all(report -> isempty(report.missing), restrictive)
         @test all(report -> isempty(report.extra), restrictive)
+        @test all(report -> isempty(report.forbidden), restrictive)
         @test all(report -> length(report.metadata_report) >= 7, restrictive)
 
         informational = Base.include(Module(), joinpath(schema_examples_dir, "informational", "run.jl"))
@@ -344,6 +632,7 @@ using Tables
         @test length(informational) == 3
         @test all(report -> report.valid, informational)
         @test all(report -> isempty(report.missing), informational)
+        @test all(report -> isempty(report.forbidden), informational)
         @test any(report -> !isempty(report.extra), informational)
 
         balanced = Base.include(Module(), joinpath(schema_examples_dir, "balanced", "run.jl"))
@@ -351,12 +640,13 @@ using Tables
         @test length(balanced) == 3
         @test all(report -> report.valid, balanced)
         @test all(report -> isempty(report.missing), balanced)
+        @test all(report -> isempty(report.forbidden), balanced)
         @test any(report -> "priority" in report.extra, balanced)
         @test any(report -> "columns.status" in report.extra, balanced)
     end
 
     @testset "Closed metadata schema" begin
-        # A schema can disallow metadata outside its MUST and MAYBE paths.
+        # A schema can disallow metadata outside its MUST, MUST_NOT, and OPTIONAL paths.
         schema = readschema(joinpath(schema_examples_dir, "restrictive", "schema.inc"))
 
         @test !schema.allow_extra
@@ -383,7 +673,8 @@ using Tables
 
         @test !report.valid
         @test isempty(report.missing)
-        @test report.extra == ["operator"]
+        @test isempty(report.extra)
+        @test report.forbidden == ["operator"]
     end
 
     @testset "INC roundtrip" begin

@@ -15,6 +15,9 @@ informational, and balanced metadata schemas. Each folder includes a schema,
 three INC files, and Julia code that validates the files and reports
 schema-informed metadata.
 
+The `invalid_examples` directory contains intentionally invalid INC files used
+by the tests to demonstrate rejected parser, structure, and schema behavior.
+
 `examples/default_schema.inc` is a permissive default schema documenting common
 metadata terms for discovery, preservation, technical details, rights,
 structure, parameters, statistical qualities, and process information.

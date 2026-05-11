@@ -37,7 +37,7 @@ escape-sequence = "\", ( '"' | "\" ) ;
 quoted-character = ? any character except '"' or "\" ? ;
 
 bare-string     = { bare-character } ;
-bare-character  = ? any character except newline, "#", or ";" ? ;
+bare-character  = ? any character except newline ? ;
 
 comment         = ( "#" | ";" ), { ? any character except newline ? } ;
 
@@ -54,7 +54,9 @@ newline         = "\n" | "\r\n" ;
 ```
 
 Names are used for both top-level keys and one-level section names. Section
-entries use the same `property-line` form as top-level metadata:
+entries use the same `property-line` form as top-level metadata. Keys and
+section names may not contain whitespace or any of `=[]#;`; section names must
+not be empty, and sections must contain at least one property.
 
 ```text
 ---
@@ -77,16 +79,20 @@ sample_id = "001"
 ```
 
 Comments begin with `#` or `;` outside quoted strings. They are stripped from
-metadata before parsing values.
+metadata before parsing values when they appear on a comment line, after a
+section header, or after a nonempty value separated by whitespace. A bare
+comment marker can also be a value, so `delim = ;` reads as the string `";"`
+and `comment = #` reads as the string `"#"`. Empty and whitespace-only values
+read as the empty string.
 
 `[structure]` is a conventional metadata section used by IncCSV to pass a small
 set of CSV.jl reader options to the CSV component. Values still follow the same
-metadata grammar, so comment characters such as `;` must be quoted when used as
-values:
+metadata grammar:
 
 ```text
 [structure]
 delim = ";"
+delimiter = ;
 comment = "#"
 ignoreemptyrows = true
 ```
@@ -96,12 +102,19 @@ For tab-delimited files, use `delim = tab`. For pipe-delimited files, use
 
 Supported `[structure]` keys are:
 
-- single-character options: `delim`, `quotechar`, `escapechar`, `decimal`, `groupmark`
+- single-character options: `delim`, `delimiter`, `quotechar`, `escapechar`, `decimal`, `groupmark`
 - string options: `comment`, `missingstring`, `dateformat`
 - boolean options: `ignoreemptyrows`, `ignorerepeated`, `normalizenames`
 - integer options: `header`, `skipto`, `footerskip`, `limit`
 
+`delimiter` is a read-only alias for `delim`; if both appear, `delimiter` takes
+precedence. Single-character options accept a one-character string, `tab`,
+`space`, `\t`, or an integer Unicode code point such as `44` for comma.
+
 Explicit keyword arguments passed to `readinc` override `[structure]` values.
+These options are applied to the CSV component after the metadata block, so
+row-oriented options such as `header` and `skipto` are relative to the CSV
+component rather than the physical first line of the INC file.
 
 The default delimiter is three ASCII hyphen-minus characters:
 
@@ -116,3 +129,21 @@ Punctuation, dash (`Pd`) category, including mixed dash characters:
 ———
 ‐–—
 ```
+
+The dash characters in a delimiter must be consecutive. A line such as
+`- - -` is not a delimiter.
+
+## Writing and Diagnostics
+
+`writeinc` accepts metadata values that are only `Int` or `String`, with
+one-level sections whose values are also only `Int` or `String`. It rejects
+`Bool`, `Float64`, `Date`, `nothing`, `missing`, arrays, nested sections,
+invalid keys, empty sections, and strings containing literal newlines. String
+values containing `"`, `\`, leading or trailing whitespace, comment markers,
+brackets, `=`, or integer-like text are quoted and escaped so they round-trip.
+
+Parser and writer errors are reported as `ArgumentError`s. Common diagnostics
+include empty or invalid metadata sections, invalid metadata keys, repeated
+sections or keys, invalid metadata lines without `=`, missing closing
+delimiters, unsupported `[structure]` keywords, and metadata values outside the
+`Int`/`String` type set.

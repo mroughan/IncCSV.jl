@@ -11,7 +11,7 @@ columns = section
 columns.time = IntegerLikeString
 columns.value = NumericString
 
-[MAYBE]
+[OPTIONAL]
 seed = Int
 version = Int
 scenario = ControlledString: baseline|stress|recovery

@@ -33,7 +33,20 @@ The package's design commitments are recorded in
 [`ARCHITECTURE.md`](ARCHITECTURE.md) and full documentation 
 can be found here [![Stable](https://img.shields.io/badge/docs-dev-blue.svg)](https://mroughan.github.io/IncCSV.jl/dev).
 
+## Installation
 
+If the package has not yet been registered, install it directly from GitHub:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/mroughan/IncCSV.jl")
+```
+
+From a checked-out copy of this repository, use:
+
+```sh
+julia --project=.
+```
 
 It is worth repeating the core principles, *i.e.,* safety, portability and simplicty, so: 
 
@@ -63,9 +76,10 @@ sequence of three or more Unicode Punctuation, dash (`Pd`) characters as a
 delimiter.
 
 The optional `[structure]` section can provide lightweight CSV.jl reader
-options for the CSV component. For example, `delim = ";"` declares a
-semicolon-delimited table. Explicit keyword arguments passed to `readinc`
-override `[structure]` values.
+options for the CSV component. For example, `delim = ";"` or the alias
+`delimiter = ;` declares a semicolon-delimited table. Explicit keyword
+arguments passed to `readinc` override `[structure]` values.
+Those reader options are applied to the CSV component after the metadata block.
 
 Examples of semicolon-, tab-, and pipe-delimited INC files live in
 `artifacts/examples`.
@@ -81,7 +95,11 @@ A permissive default schema of common metadata terms is provided at
 `artifacts/examples/default_schema.inc`.
 
 The extended BNF for the metadata block is in `docs/src/metadata.md`.
-The lightweight metadata schema format is in `docs/src/schema.md`.
+The lightweight metadata schema format is in `docs/src/schema.md`; its
+requirement sections follow IETF RFC 2119 terminology with `[MUST]`,
+`[MUST_NOT]`, and `[OPTIONAL]`. For reading existing schemas, IncCSV also
+accepts `[REQUIRED]` and `[SHALL]` as aliases for `[MUST]`, `[SHALL_NOT]` as an
+alias for `[MUST_NOT]`, and `[MAY]` as an alias for `[OPTIONAL]`.
 
 Unicode text works in metadata and CSV content:
 
@@ -104,10 +122,15 @@ file = readinc("example.inc")
 metadata(file)["title"]
 table(file)
 summarise(file)
+
+schema = readschema("artifacts/examples/default_schema.inc")
+validateschema(file, schema)
+printsummary(file)
 ```
 
 Plain CSV files can also be read with `readinc`; they simply return empty
-metadata.
+metadata. There is no separate flag distinguishing a plain CSV from an INC file
+whose metadata block is empty.
 
 ```julia
 rows = [(time=0, temperature=21.4), (time=1, temperature=21.8)]

@@ -44,6 +44,7 @@ function run_example(case_dir::AbstractString=@__DIR__)
                 valid=report.validation.valid,
                 missing=report.validation.missing,
                 extra=report.validation.extra,
+                forbidden=report.validation.forbidden,
                 rows=length(Tables.rowtable(table(file))),
                 columns=collect(Tables.columnnames(table(file))),
                 metadata_report=report.rows,
@@ -55,7 +56,7 @@ end
 
 function print_report(reports)
     for report in reports
-        println(report.file, ": valid=", report.valid, ", rows=", report.rows, ", extra=", report.extra)
+        println(report.file, ": valid=", report.valid, ", rows=", report.rows, ", extra=", report.extra, ", forbidden=", report.forbidden)
     end
 end
 

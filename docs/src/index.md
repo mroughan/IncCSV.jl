@@ -22,7 +22,7 @@ time,temperature
 Metadata is deliberately limited:
 
 - top-level `key = value` pairs
-- optional one-level `[sections]`
+- optional nonempty one-level `[sections]`
 - unquoted signed integers are read as `Int`
 - quoted values and all other values are read as `String`
 
@@ -31,7 +31,8 @@ sequence of three or more Unicode Punctuation, dash (`Pd`) characters as a
 delimiter.
 
 See [Metadata Grammar](@ref) for the extended BNF.
-See [Mini Schema](@ref) for lightweight metadata validation.
+See [Mini Schema](@ref) for lightweight metadata validation using RFC
+2119-style `[MUST]`, `[MUST_NOT]`, and `[OPTIONAL]` sections.
 
 Unicode text can appear in metadata and CSV content:
 
@@ -58,8 +59,11 @@ reader options. For example, a semicolon-delimited CSV component can declare:
 delim = ";"
 ```
 
+The alias `delimiter = ;` is also accepted for interoperability with other INC
+implementations.
+
 Explicit keyword arguments passed to `readinc` take precedence over `[structure]`
-metadata.
+metadata and are applied to the CSV component after the metadata block.
 
 Checked-in examples include semicolon, tab, and pipe delimiters in
 `artifacts/examples`.
@@ -78,6 +82,10 @@ file = readinc("example.inc")
 metadata(file)["title"]
 table(file)
 summarise(file)
+
+schema = readschema("artifacts/examples/default_schema.inc")
+validateschema(file, schema)
+printsummary(file)
 ```
 
 ```julia

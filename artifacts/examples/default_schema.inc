@@ -5,7 +5,7 @@
 [schema]
 allow_extra = true
 
-[MAYBE]
+[OPTIONAL]
 # Global terms for finding or understanding a resource.
 identifier = IdentifierString
 title = String

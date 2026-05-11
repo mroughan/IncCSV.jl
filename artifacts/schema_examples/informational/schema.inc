@@ -1,7 +1,7 @@
 ---
 # Informational schema for loosely coordinated field notes.
 # Nothing is mandatory; these descriptors document terms that some files use.
-[MAYBE]
+[OPTIONAL]
 title = String
 source = String
 observer = PersonName

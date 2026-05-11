@@ -44,6 +44,7 @@ Metadata is intentionally limited:
 
 - Top-level `key = value` pairs.
 - Optional one-level sections.
+- Sections must contain at least one property.
 - No nested sections beyond one level.
 - No arrays, tables, expressions, imports, includes, interpolation, or schema
   enforcement inside the base metadata parser.
@@ -73,8 +74,13 @@ Supported structure keys should remain a small allowlist. The current intent is
 to support practical parsing hints such as delimiters, comments, and simple
 CSV.jl reader options.
 
+`delimiter` is accepted as a read-only alias for `delim` for interoperability
+with other INC implementations; internally both map to CSV.jl's `delim`
+keyword.
+
 Explicit keyword arguments passed to `readinc` always override `[structure]`
-metadata.
+metadata. Reader options are applied to the CSV component after the metadata
+block, not to the whole physical INC file.
 
 `writeinc` writes the CSV component using explicit Julia arguments; it should
 not infer or invent `[structure]` metadata unless that behavior is intentionally
@@ -88,19 +94,27 @@ metadata syntax.
 Schemas may define:
 
 - `[MUST]`: metadata paths that must appear.
-- `[MAYBE]`: metadata paths that may appear.
+- `[MUST_NOT]`: metadata paths that must not appear.
+- `[OPTIONAL]`: metadata paths that may appear.
 - `[description]`: human-readable descriptions.
 - `[schema]`: schema-level settings such as `allow_extra`.
 
+The schema requirement words follow IETF RFC 2119
+(`https://www.rfc-editor.org/rfc/rfc2119`). IncCSV uses the spelling `MUST_NOT`
+rather than `MUST NOT` so the requirement can be represented as a single INC
+section name.
+
 Schemas validate presence and report extras. They do not enforce rich type
 descriptors beyond the base metadata parser's `Int` and `String` values.
+Schema paths are either top-level names or one-level `section.key` paths. Deeper
+paths are outside the INC metadata model and should be rejected.
 
 Type descriptor strings in schemas are informational. They may be used by
 humans or downstream tools, but IncCSV should not silently grow a rich type
 system around them.
 
-By default, schemas allow metadata fields beyond those listed in `[MUST]` and
-`[MAYBE]`. A schema can opt into closed validation with:
+By default, schemas allow metadata fields beyond those listed in `[MUST]`,
+`[MUST_NOT]`, and `[OPTIONAL]`. A schema can opt into closed validation with:
 
 ```text
 [schema]
@@ -117,8 +131,10 @@ The public API should stay small and direct:
 - `table`
 - `readschema`
 - `validateschema`
+- `summarise`
+- `printsummary`
 - simple result containers such as `IncFile`, `IncSchema`, and
-  `SchemaValidation`
+  `IncSummary`, and `SchemaValidation`
 
 Avoid adding broad abstractions unless they simplify real user workflows.
 

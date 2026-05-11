@@ -40,14 +40,14 @@ const Metadata = Dict{String,Union{MetadataValue,MetadataSection}}
 A lightweight schema for INC metadata.
 
 Schemas are read from ordinary INC metadata blocks using [`readschema`](@ref).
-Each schema field has a path, a requirement level (`:must` or `:maybe`), a type
-descriptor string, and optional descriptive text. Type descriptors are recorded
-for humans and downstream tools; IncCSV does not parse metadata values beyond
-its normal `Int`/`String` inference.
+Each schema field has a path, a requirement level (`:must`, `:must_not`, or
+`:optional`), a type descriptor string, and optional descriptive text. Type
+descriptors are recorded for humans and downstream tools; IncCSV does not parse
+metadata values beyond its normal `Int`/`String` inference.
 
 By default, metadata fields not described by the schema are allowed. If
 `allow_extra` is `false`, validation fails when a file includes metadata outside
-the schema's `MUST` and `MAYBE` fields.
+the schema's `MUST`, `MUST_NOT`, and `OPTIONAL` fields.
 """
 struct IncSchema
     fields::Dict{String,NamedTuple{(:requirement, :type, :description),Tuple{Symbol,String,Union{Nothing,String}}}}
@@ -55,22 +55,27 @@ struct IncSchema
 end
 
 """
-    SchemaValidation(valid, missing, extra)
+    SchemaValidation(valid, missing, extra, forbidden)
 
 Validation report returned by [`validateschema`](@ref).
 
 - `valid` is `true` when all `MUST` schema fields are present.
 - `missing` lists required field paths that were not found.
 - `extra` lists metadata field paths found in the file but not described by the schema.
+- `forbidden` lists `MUST_NOT` field paths that were found.
 
 Extra fields do not make a file invalid unless the schema has
-`allow_extra=false`.
+`allow_extra=false`. Forbidden fields always make a file invalid.
 """
 struct SchemaValidation
     valid::Bool
     missing::Vector{String}
     extra::Vector{String}
+    forbidden::Vector{String}
 end
+
+SchemaValidation(valid::Bool, missing, extra) =
+    SchemaValidation(valid, String.(missing), String.(extra), String[])
 
 """
     IncSummary(source, title, rows, columns, metadata_fields, csv_start)
@@ -130,20 +135,36 @@ table(file::IncFile) = file.table
 
 isdelimiter(line::AbstractString) = occursin(r"^\s*\p{Pd}{3,}\s*(?:[#;].*)?$", line)
 
+function validname(name::AbstractString)
+    return !isempty(name) && !occursin(r"[\[\]=#;\s]", name)
+end
+
+function comment_marker_starts_comment(line::AbstractString, i)
+    i == firstindex(line) && return true
+    prefix = line[firstindex(line):prevind(line, i)]
+    isempty(strip(prefix)) && return true
+    isspace(line[prevind(line, i)]) || return false
+
+    equals_index = findlast(==('='), prefix)
+    equals_index === nothing && return true
+
+    equals_index == lastindex(prefix) && return false
+    return !isempty(strip(prefix[nextind(prefix, equals_index):lastindex(prefix)]))
+end
+
 function strip_comment(line::AbstractString)
     inquote = false
     escaped = false
 
     for (i, ch) in pairs(line)
-        if escaped
+        if inquote && escaped
             escaped = false
-        elseif ch == '\\'
+        elseif inquote && ch == '\\'
             escaped = true
         elseif ch == '"'
             inquote = !inquote
-        elseif !inquote && (ch == '#' || ch == ';')
-            i == firstindex(line) && return ""
-            return line[firstindex(line):prevind(line, i)]
+        elseif !inquote && (ch == '#' || ch == ';') && comment_marker_starts_comment(line, i)
+            return i == firstindex(line) ? "" : line[firstindex(line):prevind(line, i)]
         end
     end
 
@@ -168,6 +189,8 @@ end
 function parse_metadata(lines)
     result = Metadata()
     current = result
+    current_section = nothing
+    current_section_entries = 0
     section_names = Set{String}()
 
     for (line_number, rawline) in enumerate(lines)
@@ -175,9 +198,12 @@ function parse_metadata(lines)
         isempty(line) && continue
 
         if startswith(line, "[") && endswith(line, "]")
+            current_section !== nothing && current_section_entries == 0 &&
+                throw(ArgumentError("empty metadata section '$current_section' at line $line_number"))
+
             section = String(strip(line[nextind(line, firstindex(line)):prevind(line, lastindex(line))]))
             isempty(section) && throw(ArgumentError("empty metadata section at line $line_number"))
-            occursin(r"[\[\]=#;\s]", section) &&
+            validname(section) ||
                 throw(ArgumentError("invalid metadata section '$section' at line $line_number"))
             in(section, section_names) &&
                 throw(ArgumentError("repeated metadata section '$section' at line $line_number"))
@@ -186,20 +212,26 @@ function parse_metadata(lines)
             result[section] = nested
             push!(section_names, section)
             current = nested
+            current_section = section
+            current_section_entries = 0
         else
             parts = split(line, "="; limit=2)
             length(parts) == 2 || throw(ArgumentError("invalid metadata line '$rawline' at line $line_number"))
 
             key = String(strip(parts[1]))
             isempty(key) && throw(ArgumentError("empty metadata key at line $line_number"))
-            occursin(r"[\[\]=#;\s]", key) &&
+            validname(key) ||
                 throw(ArgumentError("invalid metadata key '$key' at line $line_number"))
             haskey(current, key) &&
                 throw(ArgumentError("repeated metadata key '$key' at line $line_number"))
 
             current[key] = parse_value(parts[2])
+            current_section !== nothing && (current_section_entries += 1)
         end
     end
+
+    current_section !== nothing && current_section_entries == 0 &&
+        throw(ArgumentError("empty metadata section '$current_section' at end of metadata block"))
 
     return result
 end
@@ -229,7 +261,7 @@ function split_inc(path::AbstractString)
         close(io)
     end
 
-    throw(ArgumentError("INC metadata block is missing its closing delimiter"))
+    throw(ArgumentError("INC metadata block in '$path' is missing its closing delimiter after line $(csv_start - 1)"))
 end
 
 function getsection(meta::AbstractDict, names...)
@@ -242,6 +274,23 @@ function getsection(meta::AbstractDict, names...)
     return MetadataSection()
 end
 
+function mergesections(meta::AbstractDict, names...)
+    section = MetadataSection()
+    normalized_names = Set(lowercase.(String.(names)))
+
+    for (key, value) in meta
+        if lowercase(key) in normalized_names && value isa AbstractDict
+            for (field, descriptor) in value
+                haskey(section, field) &&
+                    throw(ArgumentError("repeated schema field '$field' in requirement sections"))
+                section[field] = descriptor
+            end
+        end
+    end
+
+    return section
+end
+
 function schemafield(requirement::Symbol, type, description)
     type isa String ||
         throw(ArgumentError("schema type descriptors must be strings"))
@@ -249,6 +298,26 @@ function schemafield(requirement::Symbol, type, description)
         throw(ArgumentError("schema descriptions must be strings"))
 
     return (requirement=requirement, type=type, description=description)
+end
+
+function validateschemapath(path::AbstractString)
+    parts = split(path, ".")
+    1 <= length(parts) <= 2 ||
+        throw(ArgumentError("schema field path '$path' must be a top-level name or one-level section.name path"))
+    all(validname, parts) ||
+        throw(ArgumentError("invalid schema field path '$path'"))
+    return String(path)
+end
+
+function addschemafields!(fields::AbstractDict, section::AbstractDict, requirement::Symbol, descriptions)
+    for (rawpath, type) in section
+        path = validateschemapath(rawpath)
+        haskey(fields, path) &&
+            throw(ArgumentError("schema field '$path' appears in multiple requirement sections"))
+        fields[path] = schemafield(requirement, type, get(descriptions, path, nothing))
+    end
+
+    return fields
 end
 
 function parse_schema_bool(value, name)
@@ -277,14 +346,24 @@ The schema file reuses INC metadata syntax and normally contains these sections:
 title = String
 columns.score = String
 
-[MAYBE]
+[OPTIONAL]
 version = Int
+
+[MUST_NOT]
+password = String
 
 [description]
 title = Human-readable title
 columns.score = Units or meaning of the score column
+password = Secrets must not be stored in data files
 ---
 ```
+
+The schema keywords follow the requirement language of IETF RFC 2119: `MUST`,
+`MUST_NOT`, and `OPTIONAL`. IncCSV writes `MUST_NOT` with an underscore so that
+the keyword is a valid INC section name. For reading, `REQUIRED` and `SHALL`
+are accepted as aliases for `MUST`, `SHALL_NOT` is accepted as an alias for
+`MUST_NOT`, and `MAY` is accepted as an alias for `OPTIONAL`.
 
 The optional `[schema]` section can set schema-level behavior:
 
@@ -294,33 +373,31 @@ allow_extra = false
 ```
 
 `allow_extra` defaults to `true`. When it is `false`, files containing metadata
-fields outside `[MUST]` and `[MAYBE]` fail validation.
+fields outside `[MUST]`, `[MUST_NOT]`, and `[OPTIONAL]` fail validation.
 
-Keys in `[MUST]` and `[MAYBE]` are metadata field paths. Top-level metadata uses
-plain names such as `title`; section entries use dotted paths such as
-`columns.score`; a section itself can be described with a path such as
-`columns` and a descriptor such as `section`.
+Keys in `[MUST]`, `[MUST_NOT]`, `[OPTIONAL]`, and their read-only aliases are
+metadata field paths. Top-level metadata uses plain names such as `title`;
+section entries use one-level dotted paths such as `columns.score`; a section
+itself can be described with a path such as `columns` and a descriptor such as
+`section`. Deeper paths such as `a.b.c` are rejected.
 
-Values in `[MUST]` and `[MAYBE]` are type descriptor strings. They may be more
-specific than `Int` or `String`; IncCSV records them but does not parse strings
-according to those descriptors.
+Values in `[MUST]`, `[MUST_NOT]`, `[OPTIONAL]`, and their read-only aliases are
+type descriptor strings. They may be more specific than `Int` or `String`;
+IncCSV records them but does not parse strings according to those descriptors.
 """
 function readschema(path::AbstractString)
     meta, _ = split_inc(path)
-    must = getsection(meta, "MUST", "must", "required")
-    maybe = getsection(meta, "MAYBE", "maybe", "optional")
+    must = mergesections(meta, "MUST", "REQUIRED", "SHALL", "must", "required", "shall")
+    must_not = mergesections(meta, "MUST_NOT", "SHALL_NOT", "must_not", "shall_not", "forbidden", "prohibited")
+    optional = mergesections(meta, "OPTIONAL", "MAY", "optional", "may")
     descriptions = getsection(meta, "description", "descriptions", "describe")
     options = getsection(meta, "schema", "options")
     allow_extra = haskey(options, "allow_extra") ? parse_schema_bool(options["allow_extra"], "allow_extra") : true
     fields = Dict{String,NamedTuple{(:requirement, :type, :description),Tuple{Symbol,String,Union{Nothing,String}}}}()
 
-    for (path, type) in must
-        fields[path] = schemafield(:must, type, get(descriptions, path, nothing))
-    end
-
-    for (path, type) in maybe
-        fields[path] = schemafield(:maybe, type, get(descriptions, path, nothing))
-    end
+    addschemafields!(fields, must, :must, descriptions)
+    addschemafields!(fields, must_not, :must_not, descriptions)
+    addschemafields!(fields, optional, :optional, descriptions)
 
     return IncSchema(fields, allow_extra)
 end
@@ -483,22 +560,33 @@ Base.show(io::IO, ::MIME"text/plain", summary::IncSummary) = printsummary(io, su
 
 Validate INC metadata against a lightweight schema.
 
-Validation checks that every `[MUST]` field in the schema is present. `[MAYBE]`
-fields are documented but optional. Additional metadata fields are returned in
-`SchemaValidation.extra`. They are allowed by default, but make validation fail
-when `schema.allow_extra == false`.
+Validation checks that every `[MUST]` field in the schema is present and that no
+`[MUST_NOT]` field is present. `[OPTIONAL]` fields are documented but optional.
+Additional metadata fields are returned in `SchemaValidation.extra`. They are
+allowed by default, but make validation fail when `schema.allow_extra == false`.
 
 Type descriptors are not enforced by IncCSV. They are carried by the schema for
 humans and downstream tools that may want richer parsing.
 """
 function validateschema(meta::AbstractDict, schema::IncSchema)
     required = sort([path for (path, field) in schema.fields if field.requirement == :must])
+    prohibited = sort([path for (path, field) in schema.fields if field.requirement == :must_not])
     known = Set(keys(schema.fields))
+    for path in keys(schema.fields)
+        parts = split(path, "."; limit=2)
+        length(parts) == 2 && push!(known, parts[1])
+    end
     actual = fieldpaths(meta)
     missing = [path for path in required if !hasfieldpath(meta, path)]
+    forbidden = [path for path in prohibited if hasfieldpath(meta, path)]
     extra = [path for path in actual if !(path in known)]
 
-    return SchemaValidation(isempty(missing) && (schema.allow_extra || isempty(extra)), missing, extra)
+    return SchemaValidation(
+        isempty(missing) && isempty(forbidden) && (schema.allow_extra || isempty(extra)),
+        missing,
+        extra,
+        forbidden,
+    )
 end
 
 validateschema(file::IncFile, schema::IncSchema) = validateschema(metadata(file), schema)
@@ -506,6 +594,18 @@ validateschema(file::IncFile, schema::IncSchema) = validateschema(metadata(file)
 function validateschema(path::AbstractString, schema::IncSchema)
     meta, _ = split_inc(path)
     return validateschema(meta, schema)
+end
+
+function csv_component(path::AbstractString, csv_start::Integer)
+    io = IOBuffer()
+    open(path, "r") do input
+        for _ in 1:(csv_start - 1)
+            eof(input) && return String(take!(io))
+            readline(input)
+        end
+        write(io, read(input, String))
+    end
+    return String(take!(io))
 end
 
 const STRUCTURE_CHAR_KEYS = Set([:delim, :quotechar, :escapechar, :decimal, :groupmark])
@@ -541,31 +641,39 @@ function structure_bool(value, key)
 end
 
 function structure_kwarg_value(key::Symbol, value)
-    key in STRUCTURE_CHAR_KEYS && return structure_char(value, key)
-    key in STRUCTURE_STRING_KEYS && value isa String && return value
-    key in STRUCTURE_STRING_KEYS && throw(ArgumentError("structure.$key must be a string"))
-    key in STRUCTURE_BOOL_KEYS && return structure_bool(value, key)
-    key in STRUCTURE_INT_KEYS && value isa Int && return value
+    canonical_key = key == :delimiter ? :delim : key
 
-    if key in STRUCTURE_INT_KEYS
+    canonical_key in STRUCTURE_CHAR_KEYS && return structure_char(value, key)
+    canonical_key in STRUCTURE_STRING_KEYS && value isa String && return value
+    canonical_key in STRUCTURE_STRING_KEYS && throw(ArgumentError("structure.$key must be a string"))
+    canonical_key in STRUCTURE_BOOL_KEYS && return structure_bool(value, key)
+    canonical_key in STRUCTURE_INT_KEYS && value isa Int && return value
+
+    if canonical_key in STRUCTURE_INT_KEYS
         throw(ArgumentError("structure.$key must be an integer"))
     end
 
     throw(ArgumentError("unsupported structure keyword '$key'"))
 end
 
+structure_kwarg_key(key::AbstractString) = key == "delimiter" ? :delim : Symbol(key)
+
 function structure_csvkwargs(meta::AbstractDict)
     structure = getsection(meta, "structure")
     kwargs = Dict{Symbol,Any}()
 
     for (key, value) in structure
-        kwargs[Symbol(key)] = structure_kwarg_value(Symbol(key), value)
+        key == "delimiter" && continue
+        kwargs[structure_kwarg_key(key)] = structure_kwarg_value(Symbol(key), value)
+    end
+    if haskey(structure, "delimiter")
+        kwargs[:delim] = structure_kwarg_value(:delimiter, structure["delimiter"])
     end
 
     return kwargs
 end
 
-function csv_options(meta::AbstractDict, csv_start::Integer, csvkwargs)
+function csv_options(meta::AbstractDict, csvkwargs)
     kwargs = structure_csvkwargs(meta)
 
     for (key, value) in pairs(csvkwargs)
@@ -573,7 +681,7 @@ function csv_options(meta::AbstractDict, csv_start::Integer, csvkwargs)
     end
 
     if !haskey(kwargs, :header) && !haskey(kwargs, :skipto)
-        kwargs[:header] = csv_start
+        kwargs[:header] = 1
     end
 
     names = Tuple(keys(kwargs))
@@ -594,15 +702,17 @@ table is a `DataFrame`.
 Plain CSV files are accepted and returned with empty metadata.
 
 CSV.jl keyword options are forwarded to the CSV reader. By default, IncCSV sets
-the CSV header line to the first line after the closing metadata delimiter. If
-you pass `header` or `skipto` yourself, your explicit CSV.jl options are used.
+the CSV header line to the first line after the closing metadata delimiter.
+CSV.jl options apply to the CSV component, not to the metadata preamble. If you
+pass `header` or `skipto` yourself, your explicit CSV.jl options are used.
 
 INC files can also include a `[structure]` metadata section to provide CSV.jl
-reader options for the CSV component. Supported keys are `delim`, `quotechar`,
-`escapechar`, `decimal`, `groupmark`, `comment`, `missingstring`, `dateformat`,
-`ignoreemptyrows`, `ignorerepeated`, `normalizenames`, `header`, `skipto`,
-`footerskip`, and `limit`. Explicit keyword arguments passed to `readinc`
-override `[structure]` values.
+reader options for the CSV component. Supported keys are `delim`, `delimiter`,
+`quotechar`, `escapechar`, `decimal`, `groupmark`, `comment`, `missingstring`,
+`dateformat`, `ignoreemptyrows`, `ignorerepeated`, `normalizenames`, `header`,
+`skipto`, `footerskip`, and `limit`. `delimiter` is an alias for `delim` and
+takes precedence if both are present. Explicit keyword arguments passed to
+`readinc` override `[structure]` values.
 
 # Examples
 
@@ -621,27 +731,30 @@ table(file) isa DataFrame
 """
 function readinc(path::AbstractString; csvkwargs...)
     meta, csv_start = split_inc(path)
-    data = CSV.File(path; csv_options(meta, csv_start, csvkwargs)...)
+    data = CSV.File(IOBuffer(csv_component(path, csv_start)); csv_options(meta, csvkwargs)...)
     return IncFile(meta, data; csv_start)
 end
 
 function readinc(path::AbstractString, sink; csvkwargs...)
     meta, csv_start = split_inc(path)
-    data = CSV.read(path, sink; csv_options(meta, csv_start, csvkwargs)...)
+    data = CSV.read(IOBuffer(csv_component(path, csv_start)), sink; csv_options(meta, csvkwargs)...)
     return IncFile(meta, data; csv_start)
 end
 
 function escape_value(value)
     text = string(value)
     needs_quotes = value isa AbstractString &&
-        (isempty(text) || occursin(r"^\s|\s$|[#;=\[\]\n\r]|^[+-]?\d+$", text))
-    text = replace(text, "\\" => "\\\\", "\"" => "\\\"")
-    return needs_quotes ? "\"$text\"" : text
+        (isempty(text) || occursin(r"^\s|\s$|[#;=\[\]\"\\]|^[+-]?\d+$", text))
+    return needs_quotes ? "\"$(replace(text, "\\" => "\\\\", "\"" => "\\\""))\"" : text
 end
 
 function validate_metadata_value(key, value)
     value isa Int && return value
-    value isa String && return value
+    if value isa String
+        occursin(r"[\n\r]", value) &&
+            throw(ArgumentError("metadata value for '$key' must not contain newlines"))
+        return value
+    end
     throw(ArgumentError("metadata value for '$key' must be an Int or String"))
 end
 
@@ -650,11 +763,14 @@ function validate_metadata(meta::AbstractDict)
 
     for (key, value) in meta
         key isa String || throw(ArgumentError("metadata keys must be strings"))
+        validname(key) || throw(ArgumentError("invalid metadata key or section '$key'"))
 
         if value isa AbstractDict
+            isempty(value) && throw(ArgumentError("metadata section '$key' must not be empty"))
             section = MetadataSection()
             for (section_key, section_value) in value
                 section_key isa String || throw(ArgumentError("metadata section keys must be strings"))
+                validname(section_key) || throw(ArgumentError("invalid metadata key '$key.$section_key'"))
                 section[section_key] = validate_metadata_value("$key.$section_key", section_value)
             end
             result[key] = section
@@ -671,17 +787,20 @@ function write_metadata(io::IO, meta::AbstractDict)
 
     println(io, "---")
 
-    for (key, value) in meta
+    for key in sort([key for (key, value) in meta if !(value isa AbstractDict)])
+        value = meta[key]
         value isa AbstractDict && continue
         println(io, key, " = ", escape_value(value))
     end
 
     wrote_section = false
-    for (section, values) in meta
+    for section in sort([key for (key, value) in meta if value isa AbstractDict])
+        values = meta[section]
         values isa AbstractDict || continue
         wrote_section && println(io)
         println(io, "[", section, "]")
-        for (key, value) in values
+        for key in sort(collect(keys(values)))
+            value = values[key]
             println(io, key, " = ", escape_value(value))
         end
         wrote_section = true
@@ -699,11 +818,16 @@ Write an INC file and return `path`.
 CSV component is written by `CSV.write`, so any Tables.jl-compatible input can
 be used, including a `DataFrame`.
 
-Metadata values must be `Int` or `String`. Metadata sections must be one-level
-dictionaries whose values are also `Int` or `String`.
+Metadata values must be `Int` or `String`. Metadata sections must be nonempty
+one-level dictionaries whose values are also `Int` or `String`. Keys and
+section names must follow the same naming rules accepted by the reader.
+Strings containing literal newlines are rejected because metadata is line
+oriented.
 
 String values that look like integers are quoted so they roundtrip as strings.
-Integer values are written unquoted and are read back as `Int`.
+String values containing `"`, `\\`, comment markers, brackets, or `=` are also
+quoted and escaped so they roundtrip safely. Integer values are written
+unquoted and are read back as `Int`.
 
 CSV.jl keyword options are forwarded to `CSV.write`.
 

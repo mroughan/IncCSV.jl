@@ -28,10 +28,16 @@ Each report includes:
 - `valid`: whether the metadata passes schema validation.
 - `missing`: required fields not present.
 - `extra`: metadata paths not described by the schema.
+- `forbidden`: `MUST_NOT` metadata paths that were present.
 - `rows`: number of table rows.
 - `columns`: parsed table column names.
 - `metadata_report`: per-field schema context including requirement, type,
   description, presence, and value.
+
+Schemas should use the canonical RFC 2119-style sections `[MUST]`,
+`[MUST_NOT]`, and `[OPTIONAL]`. IncCSV also accepts read-only aliases when
+reading schemas: `[REQUIRED]` and `[SHALL]` for `[MUST]`, `[SHALL_NOT]` for
+`[MUST_NOT]`, and `[MAY]` for `[OPTIONAL]`.
 
 ## Suites
 
@@ -41,7 +47,8 @@ A highly restrictive lab-assay example.
 
 - The schema uses `[schema] allow_extra = false`.
 - Every listed core field must be present.
-- Metadata outside `[MUST]` and `[MAYBE]` fails validation.
+- Metadata outside `[MUST]`, `[MUST_NOT]`, and `[OPTIONAL]` fails validation.
+- The schema uses `[MUST_NOT]` to reject metadata that must not appear.
 - Useful when files should follow a fixed contract.
 
 Files:
@@ -54,7 +61,7 @@ Files:
 
 A permissive field-notes example.
 
-- The schema has only `[MAYBE]` fields.
+- The schema has only `[OPTIONAL]` fields.
 - Extra metadata is expected and allowed.
 - Useful when a schema mainly documents common vocabulary.
 
@@ -69,7 +76,7 @@ Files:
 A simulation-run example between the two extremes.
 
 - A small core is required with `[MUST]`.
-- Provenance and run details are optional with `[MAYBE]`.
+- Provenance and run details are optional with `[OPTIONAL]`.
 - Extra metadata is allowed and reported.
 - Useful when files need enough metadata to be interpretable but should still
   allow project-specific fields.
