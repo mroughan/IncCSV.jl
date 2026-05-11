@@ -587,6 +587,7 @@ using Tables
         @test occursin("title: demo data", text)
         @test occursin("rows: 5", text)
         @test occursin("columns: name, score", text)
+        @test endswith(text, "\n")
 
         file_summary = summarise(readinc(plain_csv, DataFrame))
 

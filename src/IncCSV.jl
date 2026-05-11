@@ -519,7 +519,7 @@ function printsummary(io::IO, summary::IncSummary)
     println(io, "  rows: ", summary.rows)
     println(io, "  columns: ", isempty(summary.columns) ? "(none)" : join(summary.columns, ", "))
     println(io, "  metadata fields: ", isempty(summary.metadata_fields) ? "(none)" : join(summary.metadata_fields, ", "))
-    print(io, "  CSV starts at line: ", summary.csv_start)
+    println(io, "  CSV starts at line: ", summary.csv_start)
 
     return summary
 end
