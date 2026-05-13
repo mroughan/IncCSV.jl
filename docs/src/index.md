@@ -31,6 +31,7 @@ sequence of three or more Unicode Punctuation, dash (`Pd`) characters as a
 delimiter.
 
 See [Metadata Grammar](@ref) for the extended BNF.
+See [Structure Options](@ref) for details on `[structure]` parser hints.
 See [Mini Schema](@ref) for lightweight metadata validation using RFC
 2119-style `[MUST]`, `[MUST_NOT]`, and `[OPTIONAL]` sections.
 
@@ -66,6 +67,8 @@ The supported `[structure]` keys are `delim`, `delimiter`, `quotechar`,
 `escapechar`, `comment`, `header`, and `footerskip`. Julia-specific CSV.jl
 options outside this allowlist can still be passed directly as `readinc`
 keyword arguments.
+
+See [Structure Options](@ref) for examples.
 
 Explicit keyword arguments passed to `readinc` take precedence over `[structure]`
 metadata and are applied to the CSV component after the metadata block.

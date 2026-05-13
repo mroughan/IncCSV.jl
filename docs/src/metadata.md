@@ -129,6 +129,8 @@ INC implementations can support consistently. Use explicit
 Explicit keyword arguments passed to `readinc` override `[structure]` values.
 These options are applied to the CSV component after the metadata block.
 
+See [Structure Options](@ref) for more detail and examples.
+
 The default delimiter is three ASCII hyphen-minus characters:
 
 ```text

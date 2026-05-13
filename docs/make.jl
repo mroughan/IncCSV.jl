@@ -20,6 +20,7 @@ makedocs(
     pages=[
         "Home" => "index.md", 
         "Metadata Grammar" => "metadata.md",
+        "Structure Options" => "structure.md",
         "Mini Schema" => "schema.md",
         "API" => "api.md",
     ],
