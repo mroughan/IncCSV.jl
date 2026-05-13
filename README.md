@@ -42,10 +42,96 @@ using Pkg
 Pkg.add(url="https://github.com/mroughan/IncCSV.jl")
 ```
 
+If you want to follow the DataFrame examples below, also install DataFrames.jl:
+
+```julia
+using Pkg
+Pkg.add("DataFrames")
+```
+
 From a checked-out copy of this repository, use:
 
 ```sh
 julia --project=.
+```
+
+## Quickstart
+
+An INC file is ordinary CSV with a small metadata block at the top:
+
+```text
+---
+title = Example data
+source = quickstart
+[columns]
+temperature = Celsius
+---
+time,temperature
+0,21.4
+1,21.8
+```
+
+Read it with the same shape as a CSV.jl workflow:
+
+```julia
+using IncCSV
+using DataFrames
+
+file = readinc("example.inc", DataFrame)
+
+metadata(file)["title"]              # "Example data"
+metadata(file)["columns"]["temperature"] # "Celsius"
+table(file)                          # a DataFrame
+printsummary(file)
+```
+
+Write an INC file by passing rows plus a small metadata dictionary:
+
+```julia
+rows = [(time=0, temperature=21.4), (time=1, temperature=21.8)]
+
+writeinc(
+    "example.inc",
+    rows;
+    metadata=Dict(
+        "title" => "Example data",
+        "source" => "quickstart",
+        "columns" => Dict("temperature" => "Celsius"),
+    ),
+)
+```
+
+Use `[structure]` when the CSV component is not comma-delimited:
+
+```text
+---
+title = Semicolon data
+[structure]
+delimiter = ;
+---
+name;score
+Ada;10
+```
+
+```julia
+file = readinc("semicolon.inc", DataFrame)
+```
+
+Validate metadata with a lightweight schema:
+
+```julia
+schema = readschema("artifacts/examples/default_schema.inc")
+result = validateschema(file, schema)
+
+result.valid
+result.missing
+result.extra
+```
+
+A runnable tutorial is included at `artifacts/examples/tutorial.jl`:
+
+```sh
+julia --project=. artifacts/examples/tutorial.jl
 ```
 
 It is worth repeating the core principles, *i.e.,* safety, portability and simplicty, so: 
@@ -75,10 +161,14 @@ The default delimiter between metadata and data is `---`. Readers accept any
 sequence of three or more Unicode Punctuation, dash (`Pd`) characters as a
 delimiter.
 
-The optional `[structure]` section can provide lightweight CSV.jl reader
-options for the CSV component. For example, `delim = ";"` or the alias
-`delimiter = ;` declares a semicolon-delimited table. Explicit keyword
-arguments passed to `readinc` override `[structure]` values.
+The optional `[structure]` section can provide a small allowlist of CSV reader
+options for the CSV component. The allowed keys are `delim`, `delimiter`,
+`quotechar`, `escapechar`, `comment`, `header`, and `footerskip`. These names
+are primarily based on CSV.jl keyword arguments, with an eye toward options
+that other INC implementations can support consistently. For example,
+`delim = ";"` or the alias `delimiter = ;` declares a
+semicolon-delimited table. Explicit keyword arguments passed to `readinc`
+override `[structure]` values.
 Those reader options are applied to the CSV component after the metadata block.
 
 Examples of semicolon-, tab-, and pipe-delimited INC files live in

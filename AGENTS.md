@@ -9,7 +9,9 @@ Preserve the core direction of the project:
 - Metadata remains small, human-readable, and one-level deep.
 - Metadata scalar values remain limited to `Int` and `String`.
 - Rich schema type descriptors are informational unless explicitly redesigned.
-- `[structure]` provides CSV.jl parsing hints, but explicit Julia kwargs win.
+- `[structure]` provides only the documented allowlist of CSV parsing hints
+  (`delim`, `delimiter`, `quotechar`, `escapechar`, `comment`, `header`, and
+  `footerskip`); explicit Julia kwargs win.
 - Default behavior should remain permissive unless a schema opts into stricter
   validation.
 

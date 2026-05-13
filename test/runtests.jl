@@ -18,6 +18,8 @@ using Tables
     structured_semicolon_inc = joinpath(example_dir, "structured_semicolon.inc")
     structured_tsv_inc = joinpath(example_dir, "structured_tsv.inc")
     structured_pipe_inc = joinpath(example_dir, "structured_pipe.inc")
+    structured_quotechar_inc = joinpath(example_dir, "structured_quotechar.inc")
+    structured_escapechar_inc = joinpath(example_dir, "structured_escapechar.inc")
     structured_delimiter_alias_inc = joinpath(example_dir, "structured_delimiter_alias.inc")
     structured_delimiter_precedence_inc = joinpath(example_dir, "structured_delimiter_precedence.inc")
     default_schema_inc = joinpath(example_dir, "default_schema.inc")
@@ -154,8 +156,9 @@ using Tables
             "missing_closing_delimiter.inc",
             "repeated_key.inc",
             "invalid_section_key.inc",
-            "structure_invalid_bool.inc",
+            "structure_invalid_comment.inc",
             "structure_invalid_char.inc",
+            "structure_invalid_int.inc",
             "unsupported_structure_key.inc",
         ]
 
@@ -207,6 +210,18 @@ using Tables
         @test table(pipe_file).name == ["Ada", "Babbage"]
         @test table(pipe_file).score == [21, 12]
 
+        quote_file = readinc(structured_quotechar_inc, DataFrame)
+
+        @test metadata(quote_file)["title"] == "Quote character data"
+        @test metadata(quote_file)["structure"]["quotechar"] == "'"
+        @test table(quote_file).note == ["hello, world"]
+
+        escape_file = readinc(structured_escapechar_inc, DataFrame)
+
+        @test metadata(escape_file)["title"] == "Escape character data"
+        @test metadata(escape_file)["structure"]["escapechar"] == "|"
+        @test table(escape_file).note == ["say \"hi\""]
+
         delimiter_file = readinc(structured_delimiter_alias_inc, DataFrame)
 
         @test metadata(delimiter_file)["title"] == "Delimiter alias data"
@@ -237,6 +252,71 @@ using Tables
         @test metadata(explicit_file)["structure"]["delim"] == ";"
         @test table(explicit_file).name == ["Ada"]
         @test table(explicit_file).score == [21]
+
+        header_path = joinpath(dir, "structure_header.inc")
+        write(
+            header_path,
+            "---\n" *
+            "title = Structure header option\n" *
+            "[structure]\n" *
+            "header = 2\n" *
+            "---\n" *
+            "discard,discard\n" *
+            "name,score\n" *
+            "Ada,21\n",
+        )
+        header_file = readinc(header_path, DataFrame)
+
+        @test metadata(header_file)["structure"]["header"] == 2
+        @test table(header_file).name == ["Ada"]
+        @test table(header_file).score == [21]
+
+        footer_path = joinpath(dir, "structure_footerskip.inc")
+        write(
+            footer_path,
+            "---\n" *
+            "title = Structure footerskip option\n" *
+            "[structure]\n" *
+            "footerskip = 1\n" *
+            "---\n" *
+            "name,score\n" *
+            "Ada,21\n" *
+            "Babbage,12\n" *
+            "TOTAL,33\n",
+        )
+        footer_file = readinc(footer_path, DataFrame)
+
+        @test metadata(footer_file)["structure"]["footerskip"] == 1
+        @test table(footer_file).name == ["Ada", "Babbage"]
+        @test table(footer_file).score == [21, 12]
+
+        skipto_path = joinpath(dir, "structure_skipto_rejected.inc")
+        write(
+            skipto_path,
+            "---\n" *
+            "title = Structure skipto rejected\n" *
+            "[structure]\n" *
+            "skipto = 2\n" *
+            "---\n" *
+            "name,score\n" *
+            "Ada,21\n",
+        )
+
+        @test_throws ArgumentError readinc(skipto_path, DataFrame)
+
+        limit_path = joinpath(dir, "structure_limit_rejected.inc")
+        write(
+            limit_path,
+            "---\n" *
+            "title = Structure limit rejected\n" *
+            "[structure]\n" *
+            "limit = 1\n" *
+            "---\n" *
+            "name,score\n" *
+            "Ada,21\n",
+        )
+
+        @test_throws ArgumentError readinc(limit_path, DataFrame)
     end
 
     @testset "UTF-8 Unicode artifact" begin
@@ -556,6 +636,7 @@ using Tables
         @test schema.fields["preservation.language"].type == "LanguageString"
         @test schema.fields["rights.license"].type == "LicenseString"
         @test schema.fields["structure.delim"].type == "CharacterString"
+        @test schema.fields["structure.header"].type == "Int"
         @test schema.fields["parameters"].type == "section"
         @test schema.fields["statistical"].type == "section"
         @test schema.fields["process"].type == "section"

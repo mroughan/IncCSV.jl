@@ -608,10 +608,9 @@ function csv_component(path::AbstractString, csv_start::Integer)
     return String(take!(io))
 end
 
-const STRUCTURE_CHAR_KEYS = Set([:delim, :quotechar, :escapechar, :decimal, :groupmark])
-const STRUCTURE_STRING_KEYS = Set([:comment, :missingstring, :dateformat])
-const STRUCTURE_BOOL_KEYS = Set([:ignoreemptyrows, :ignorerepeated, :normalizenames])
-const STRUCTURE_INT_KEYS = Set([:header, :skipto, :footerskip, :limit])
+const STRUCTURE_CHAR_KEYS = Set([:delim, :quotechar, :escapechar])
+const STRUCTURE_STRING_KEYS = Set([:comment])
+const STRUCTURE_INT_KEYS = Set([:header, :footerskip])
 
 function structure_char(value, key)
     value isa Int && return Char(value)
@@ -627,26 +626,12 @@ function structure_char(value, key)
     throw(ArgumentError("structure.$key must be a single character, 'tab', or 'space'"))
 end
 
-function structure_bool(value, key)
-    if value isa Int
-        value == 1 && return true
-        value == 0 && return false
-    elseif value isa String
-        normalized = lowercase(strip(value))
-        normalized in ("true", "yes", "1") && return true
-        normalized in ("false", "no", "0") && return false
-    end
-
-    throw(ArgumentError("structure.$key must be true or false"))
-end
-
 function structure_kwarg_value(key::Symbol, value)
     canonical_key = key == :delimiter ? :delim : key
 
     canonical_key in STRUCTURE_CHAR_KEYS && return structure_char(value, key)
     canonical_key in STRUCTURE_STRING_KEYS && value isa String && return value
     canonical_key in STRUCTURE_STRING_KEYS && throw(ArgumentError("structure.$key must be a string"))
-    canonical_key in STRUCTURE_BOOL_KEYS && return structure_bool(value, key)
     canonical_key in STRUCTURE_INT_KEYS && value isa Int && return value
 
     if canonical_key in STRUCTURE_INT_KEYS
@@ -706,13 +691,11 @@ the CSV header line to the first line after the closing metadata delimiter.
 CSV.jl options apply to the CSV component, not to the metadata preamble. If you
 pass `header` or `skipto` yourself, your explicit CSV.jl options are used.
 
-INC files can also include a `[structure]` metadata section to provide CSV.jl
+INC files can also include a `[structure]` metadata section to provide portable
 reader options for the CSV component. Supported keys are `delim`, `delimiter`,
-`quotechar`, `escapechar`, `decimal`, `groupmark`, `comment`, `missingstring`,
-`dateformat`, `ignoreemptyrows`, `ignorerepeated`, `normalizenames`, `header`,
-`skipto`, `footerskip`, and `limit`. `delimiter` is an alias for `delim` and
-takes precedence if both are present. Explicit keyword arguments passed to
-`readinc` override `[structure]` values.
+`quotechar`, `escapechar`, `comment`, `header`, and `footerskip`. `delimiter`
+is an alias for `delim` and takes precedence if both are present. Explicit
+keyword arguments passed to `readinc` override `[structure]` values.
 
 # Examples
 

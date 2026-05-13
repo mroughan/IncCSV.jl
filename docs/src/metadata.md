@@ -94,27 +94,40 @@ metadata grammar:
 delim = ";"
 delimiter = ;
 comment = "#"
-ignoreemptyrows = true
 ```
 
 For tab-delimited files, use `delim = tab`. For pipe-delimited files, use
 `delim = "|"`.
 
-Supported `[structure]` keys are:
+Supported `[structure]` keys are deliberately limited to a small allowlist:
 
-- single-character options: `delim`, `delimiter`, `quotechar`, `escapechar`, `decimal`, `groupmark`
-- string options: `comment`, `missingstring`, `dateformat`
-- boolean options: `ignoreemptyrows`, `ignorerepeated`, `normalizenames`
-- integer options: `header`, `skipto`, `footerskip`, `limit`
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `delim` | character | Delimiter between CSV fields. |
+| `delimiter` | character | Alias for `delim`; if both appear, `delimiter` wins. |
+| `quotechar` | character | Quote character used by the CSV component. |
+| `escapechar` | character | Escape character used by the CSV component. |
+| `comment` | string | Comment marker used by the CSV component. |
+| `header` | integer | CSV component line containing column names. |
+| `footerskip` | integer | Number of trailing CSV component rows to ignore. |
 
 `delimiter` is a read-only alias for `delim`; if both appear, `delimiter` takes
 precedence. Single-character options accept a one-character string, `tab`,
 `space`, `\t`, or an integer Unicode code point such as `44` for comma.
 
+Integer options accept unquoted integer values. Line-oriented options are
+relative to the CSV component after the metadata block, not to the physical
+first line of the INC file.
+
+This allowlist is intentionally smaller than CSV.jl's full keyword set. It is
+based on CSV.jl names where practical, with an eye toward behavior that other
+INC implementations can support consistently. Use explicit
+`readinc(...; kwargs...)` calls for Julia-specific CSV.jl options such as
+`skipto`, `limit`, `missingstring`, `dateformat`, `normalizenames`,
+`ignoreemptyrows`, `ignorerepeated`, `decimal`, or `groupmark`.
+
 Explicit keyword arguments passed to `readinc` override `[structure]` values.
-These options are applied to the CSV component after the metadata block, so
-row-oriented options such as `header` and `skipto` are relative to the CSV
-component rather than the physical first line of the INC file.
+These options are applied to the CSV component after the metadata block.
 
 The default delimiter is three ASCII hyphen-minus characters:
 

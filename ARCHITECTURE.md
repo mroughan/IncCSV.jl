@@ -70,9 +70,10 @@ meaning.
 The `[structure]` section may provide lightweight CSV.jl reader options for the
 CSV component.
 
-Supported structure keys should remain a small allowlist. The current intent is
-to support practical parsing hints such as delimiters, comments, and simple
-CSV.jl reader options.
+Supported structure keys should remain a small allowlist. The current allowlist
+is `delim`, `delimiter`, `quotechar`, `escapechar`, `comment`, `header`, and
+`footerskip`. These names are based primarily on CSV.jl keyword arguments, with
+an eye toward behavior that other INC implementations can support consistently.
 
 `delimiter` is accepted as a read-only alias for `delim` for interoperability
 with other INC implementations; internally both map to CSV.jl's `delim`
@@ -81,6 +82,11 @@ keyword.
 Explicit keyword arguments passed to `readinc` always override `[structure]`
 metadata. Reader options are applied to the CSV component after the metadata
 block, not to the whole physical INC file.
+
+Julia-specific CSV.jl options outside the allowlist, such as `skipto`, `limit`,
+`missingstring`, `dateformat`, `normalizenames`, `ignoreemptyrows`,
+`ignorerepeated`, `decimal`, or `groupmark`, should be passed as explicit
+`readinc` keyword arguments rather than stored in `[structure]`.
 
 `writeinc` writes the CSV component using explicit Julia arguments; it should
 not infer or invent `[structure]` metadata unless that behavior is intentionally

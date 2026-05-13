@@ -36,9 +36,12 @@ rights.accessible_to = String
 # Information about the file format and CSV parser hints.
 structure = section
 structure.delim = CharacterString
+structure.delimiter = CharacterString
+structure.quotechar = CharacterString
+structure.escapechar = CharacterString
 structure.comment = CharacterString
-structure.missingstring = String
-structure.dateformat = DateFormatString
+structure.header = Int
+structure.footerskip = Int
 
 # Parameters of code generating the data.
 parameters = section
@@ -71,9 +74,12 @@ rights.rights_holder = Person or organisation holding rights
 rights.accessible_to = Access-control audience or group
 structure = CSV component structure and parser hints
 structure.delim = Delimiter used by the CSV component
+structure.delimiter = Alias for structure.delim used by some INC implementations
+structure.quotechar = Quote character used by the CSV component
+structure.escapechar = Escape character used by the CSV component
 structure.comment = Comment marker used by the CSV component
-structure.missingstring = Missing-value marker used by the CSV component
-structure.dateformat = Date format hint for the CSV component
+structure.header = CSV component line containing column names
+structure.footerskip = Number of trailing CSV component rows to ignore
 parameters = Parameters of code generating the data
 statistical = Statistical qualities of the data
 process = Process used to generate, transform, or collect the data

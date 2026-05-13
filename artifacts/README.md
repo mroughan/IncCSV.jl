@@ -10,6 +10,10 @@ The `examples` directory includes `tutorial.jl`, a small runnable walkthrough
 that reads INC files, uses `[structure]` parser hints, validates metadata with a
 schema, and writes a roundtrip example.
 
+The documented `[structure]` allowlist is `delim`, `delimiter`, `quotechar`,
+`escapechar`, `comment`, `header`, and `footerskip`. Other CSV.jl options
+should be passed directly to `readinc` as Julia keyword arguments.
+
 The `schema_examples` directory contains three small folders showing restrictive,
 informational, and balanced metadata schemas. Each folder includes a schema,
 three INC files, and Julia code that validates the files and reports

@@ -45,11 +45,17 @@ summarise(file)
 
 These files use `[structure]` metadata to provide CSV.jl reader options:
 
+The allowed `[structure]` keys are `delim`, `delimiter`, `quotechar`,
+`escapechar`, `comment`, `header`, and `footerskip`. Other CSV.jl options
+should be passed directly to `readinc`.
+
 - `structured_semicolon.inc`: semicolon-delimited CSV component with `delim = ";"`.
 - `structured_delimiter_alias.inc`: semicolon-delimited CSV component with `delimiter = ;`.
 - `structured_delimiter_precedence.inc`: both `delim` and `delimiter`, with `delimiter` taking precedence.
 - `structured_tsv.inc`: tab-delimited CSV component with `delim = tab`.
 - `structured_pipe.inc`: pipe-delimited CSV component with `delim = "|"`.
+- `structured_quotechar.inc`: CSV component using a non-default quote character.
+- `structured_escapechar.inc`: CSV component using a non-default escape character.
 
 Example:
 

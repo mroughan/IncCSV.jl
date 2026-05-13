@@ -14,8 +14,9 @@ These files are not examples to copy for normal use.
 - `invalid_section_key.inc`: section key containing whitespace.
 - `missing_closing_delimiter.inc`: metadata block with no closing delimiter.
 - `repeated_key.inc`: repeated top-level metadata key.
-- `structure_invalid_bool.inc`: boolean `[structure]` value outside the accepted forms.
+- `structure_invalid_comment.inc`: non-string `comment` value in `[structure]`.
 - `structure_invalid_char.inc`: single-character `[structure]` value with too many characters.
+- `structure_invalid_int.inc`: integer `[structure]` value written as a string.
 - `unsupported_structure_key.inc`: unsupported `[structure]` key.
 - `schema_duplicate_requirement.inc`: schema field declared in two requirement sections.
 - `schema_duplicate_alias_requirement.inc`: schema field repeated through RFC 2119 aliases.

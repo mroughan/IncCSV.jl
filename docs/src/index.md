@@ -62,6 +62,11 @@ delim = ";"
 The alias `delimiter = ;` is also accepted for interoperability with other INC
 implementations.
 
+The supported `[structure]` keys are `delim`, `delimiter`, `quotechar`,
+`escapechar`, `comment`, `header`, and `footerskip`. Julia-specific CSV.jl
+options outside this allowlist can still be passed directly as `readinc`
+keyword arguments.
+
 Explicit keyword arguments passed to `readinc` take precedence over `[structure]`
 metadata and are applied to the CSV component after the metadata block.
 
