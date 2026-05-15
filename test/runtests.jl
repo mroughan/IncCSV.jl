@@ -1,6 +1,8 @@
+using Aqua
 using CSV
 using DataFrames
 using IncCSV
+using JET
 using Test
 using Tables
 
@@ -784,5 +786,11 @@ using Tables
         @test metadata(dataframe_roundtrip)["source"] == "unit test"
         @test metadata(dataframe_roundtrip)["columns"]["score"] == "points"
         @test table(dataframe_roundtrip) == dataframe
+    end
+
+    @testset "Code quality" begin
+        # Run package-level hygiene checks and static analysis.
+        Aqua.test_all(IncCSV)
+        JET.test_package(IncCSV; target_modules=(IncCSV,))
     end
 end
