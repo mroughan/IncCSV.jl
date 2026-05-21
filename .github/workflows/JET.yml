@@ -1,0 +1,29 @@
+name: JET
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  jet:
+    name: JET.jl
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Run JET checks
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.activate(; temp=true)
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.add(PackageSpec(name="JET", version="0.11"))
+          using IncCSV
+          using JET
+          JET.test_package(IncCSV; target_modules=(IncCSV,))
