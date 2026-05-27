@@ -5,7 +5,7 @@
 [![Aqua](https://github.com/mroughan/IncCSV.jl/actions/workflows/Aqua.yml/badge.svg)](https://github.com/mroughan/IncCSV.jl/actions/workflows/Aqua.yml)
 [![JET](https://github.com/mroughan/IncCSV.jl/actions/workflows/JET.yml/badge.svg)](https://github.com/mroughan/IncCSV.jl/actions/workflows/JET.yml)
 [![Coverage](https://github.com/mroughan/IncCSV.jl/actions/workflows/Coverage.yml/badge.svg)](https://github.com/mroughan/IncCSV.jl/actions/workflows/Coverage.yml)
-[![codecov](https://codecov.io/gh/mroughan/IncCSV.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/mroughan/IncCSV.jl)
+[![codecov](https://codecov.io/gh/mroughan/IncCSV.jl/branch/main/graph/badge.svg?token=)](https://codecov.io/gh/mroughan/IncCSV.jl)
 [![Documentation](https://github.com/mroughan/IncCSV.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/mroughan/IncCSV.jl/actions/workflows/documentation.yml)
 [![CompatHelper](https://github.com/mroughan/IncCSV.jl/actions/workflows/CompatHelper.yml/badge.svg)](https://github.com/mroughan/IncCSV.jl/actions/workflows/CompatHelper.yml)
 
