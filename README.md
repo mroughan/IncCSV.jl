@@ -45,7 +45,14 @@ The package's design commitments are recorded in
 
 ## Installation
 
-If the package has not yet been registered, install it directly from GitHub:
+Install IncCSV.jl from the Julia General registry:
+
+```julia
+using Pkg
+Pkg.add("IncCSV")
+```
+
+To install the development version directly from GitHub, use:
 
 ```julia
 using Pkg
