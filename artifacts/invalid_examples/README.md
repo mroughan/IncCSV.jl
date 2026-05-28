@@ -15,6 +15,7 @@ These files are not examples to copy for normal use.
 - `missing_closing_delimiter.inc`: metadata block with no closing delimiter.
 - `repeated_key.inc`: repeated top-level metadata key.
 - `structure_invalid_comment.inc`: non-string `comment` value in `[structure]`.
+- `structure_invalid_comment_length.inc`: multi-character `comment` value in `[structure]`.
 - `structure_invalid_char.inc`: single-character `[structure]` value with too many characters.
 - `structure_invalid_int.inc`: integer `[structure]` value written as a string.
 - `unsupported_structure_key.inc`: unsupported `[structure]` key.

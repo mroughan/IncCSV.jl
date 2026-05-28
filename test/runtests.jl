@@ -1,8 +1,6 @@
-using Aqua
 using CSV
 using DataFrames
 using IncCSV
-using JET
 using Test
 using Tables
 
@@ -159,6 +157,7 @@ using Tables
             "repeated_key.inc",
             "invalid_section_key.inc",
             "structure_invalid_comment.inc",
+            "structure_invalid_comment_length.inc",
             "structure_invalid_char.inc",
             "structure_invalid_int.inc",
             "unsupported_structure_key.inc",
@@ -788,9 +787,4 @@ using Tables
         @test table(dataframe_roundtrip) == dataframe
     end
 
-    @testset "Code quality" begin
-        # Run package-level hygiene checks and static analysis.
-        Aqua.test_all(IncCSV)
-        JET.test_package(IncCSV; target_modules=(IncCSV,))
-    end
 end

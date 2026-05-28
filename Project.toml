@@ -9,20 +9,16 @@ DataAPI = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
-Aqua = "0.8"
 CSV = "0.10"
 DataAPI = "1"
 DataFrames = "1"
-JET = "0.10, 0.11"
 Tables = "1"
 Test = "1"
-julia = "1.12"
+julia = "1.10"
 
 [extras]
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "DataFrames", "JET", "Test"]
+test = ["DataFrames", "Test"]

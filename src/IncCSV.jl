@@ -609,7 +609,6 @@ function csv_component(path::AbstractString, csv_start::Integer)
 end
 
 const STRUCTURE_CHAR_KEYS = Set([:delim, :quotechar, :escapechar])
-const STRUCTURE_STRING_KEYS = Set([:comment])
 const STRUCTURE_INT_KEYS = Set([:header, :footerskip])
 
 function structure_char(value, key)
@@ -630,8 +629,8 @@ function structure_kwarg_value(key::Symbol, value)
     canonical_key = key == :delimiter ? :delim : key
 
     canonical_key in STRUCTURE_CHAR_KEYS && return structure_char(value, key)
-    canonical_key in STRUCTURE_STRING_KEYS && value isa String && return value
-    canonical_key in STRUCTURE_STRING_KEYS && throw(ArgumentError("structure.$key must be a string"))
+    canonical_key == :comment && value isa String && length(value) == 1 && return value
+    canonical_key == :comment && throw(ArgumentError("structure.$key must be a single-character string"))
     canonical_key in STRUCTURE_INT_KEYS && value isa Int && return value
 
     if canonical_key in STRUCTURE_INT_KEYS

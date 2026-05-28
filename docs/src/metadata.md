@@ -107,13 +107,14 @@ Supported `[structure]` keys are deliberately limited to a small allowlist:
 | `delimiter` | character | Alias for `delim`; if both appear, `delimiter` wins. |
 | `quotechar` | character | Quote character used by the CSV component. |
 | `escapechar` | character | Escape character used by the CSV component. |
-| `comment` | string | Comment marker used by the CSV component. |
+| `comment` | single-character string | Comment marker used by the CSV component. |
 | `header` | integer | CSV component line containing column names. |
 | `footerskip` | integer | Number of trailing CSV component rows to ignore. |
 
 `delimiter` is a read-only alias for `delim`; if both appear, `delimiter` takes
 precedence. Single-character options accept a one-character string, `tab`,
 `space`, `\t`, or an integer Unicode code point such as `44` for comma.
+`comment` must be a one-character string.
 
 Integer options accept unquoted integer values. Line-oriented options are
 relative to the CSV component after the metadata block, not to the physical

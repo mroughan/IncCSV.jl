@@ -19,7 +19,7 @@ Explicit keyword arguments passed to `readinc` always override values from
 | `delimiter` | character | Alias for `delim`; if both appear, `delimiter` wins. |
 | `quotechar` | character | Quote character used by the CSV component. |
 | `escapechar` | character | Escape character used by the CSV component. |
-| `comment` | string | Comment marker used by the CSV component. |
+| `comment` | single-character string | Comment marker used by the CSV component. |
 | `header` | integer | CSV component line containing column names. |
 | `footerskip` | integer | Number of trailing CSV component rows to ignore. |
 
@@ -42,6 +42,8 @@ Character options accept:
 - `space` for a space character;
 - `\t` for the tab character;
 - an integer Unicode code point, such as `delim = 44` for comma.
+
+`comment` must be a one-character string, such as `comment = "#"`.
 
 Integer options such as `header` and `footerskip` must be unquoted integers.
 For example, use `header = 2`, not `header = "2"`.
