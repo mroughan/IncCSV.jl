@@ -52,6 +52,11 @@ Anaïs,21
 The CSV component is still parsed and written by CSV.jl, and CSV.jl keyword
 options can be passed through `readinc` and `writeinc`.
 
+IncCSV follows a bounded version of Postel's law. Writers emit conservative,
+canonical INC. Readers accept documented compatible variants, such as plain CSV
+passthrough and portable aliases, but malformed metadata and unsupported
+structure keys are rejected rather than guessed.
+
 Files can also include a `[structure]` metadata section with lightweight CSV.jl
 reader options. For example, a semicolon-delimited CSV component can declare:
 
@@ -72,6 +77,9 @@ See [Structure Options](@ref) for examples.
 
 Explicit keyword arguments passed to `readinc` take precedence over `[structure]`
 metadata and are applied to the CSV component after the metadata block.
+When writing, `writeinc` applies writer-relevant `[structure]` values to the
+CSV component and rejects explicit writer keywords that contradict the
+metadata.
 
 Checked-in examples include semicolon, tab, and pipe delimiters in
 `artifacts/examples`.

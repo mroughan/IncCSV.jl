@@ -610,8 +610,10 @@ end
 
 const STRUCTURE_CHAR_KEYS = Set([:delim, :quotechar, :escapechar])
 const STRUCTURE_INT_KEYS = Set([:header, :footerskip])
+const STRUCTURE_WRITE_KEYS = Set([:delim, :quotechar, :escapechar])
 
 function structure_char(value, key)
+    value isa Char && return value
     value isa Int && return Char(value)
 
     if value isa String
@@ -666,6 +668,29 @@ function csv_options(meta::AbstractDict, csvkwargs)
 
     if !haskey(kwargs, :header) && !haskey(kwargs, :skipto)
         kwargs[:header] = 1
+    end
+
+    names = Tuple(keys(kwargs))
+    return NamedTuple{names}(Tuple(kwargs[name] for name in names))
+end
+
+function csv_write_options(meta::AbstractDict, csvkwargs)
+    structure_kwargs = structure_csvkwargs(meta)
+    kwargs = Dict{Symbol,Any}(:header => true)
+
+    for key in STRUCTURE_WRITE_KEYS
+        haskey(structure_kwargs, key) && (kwargs[key] = structure_kwargs[key])
+    end
+
+    for (key, value) in pairs(csvkwargs)
+        normalized = key in STRUCTURE_WRITE_KEYS ? structure_kwarg_value(key, value) : value
+        if key in STRUCTURE_WRITE_KEYS && haskey(kwargs, key) && kwargs[key] != normalized
+            throw(ArgumentError(
+                "CSV write keyword '$key' conflicts with metadata structure.$key; " *
+                "update metadata or remove the explicit keyword",
+            ))
+        end
+        kwargs[key] = normalized
     end
 
     names = Tuple(keys(kwargs))
@@ -811,7 +836,11 @@ String values containing `"`, `\\`, comment markers, brackets, or `=` are also
 quoted and escaped so they roundtrip safely. Integer values are written
 unquoted and are read back as `Int`.
 
-CSV.jl keyword options are forwarded to `CSV.write`.
+Writer-relevant `[structure]` metadata (`delim`, `delimiter`, `quotechar`, and
+`escapechar`) is applied to the CSV component so the written data matches the
+metadata. Explicit CSV.jl keyword options are still forwarded to `CSV.write`,
+but writer keywords that contradict `[structure]` metadata are rejected rather
+than producing a file whose metadata misdescribes its CSV component.
 
 # Example
 
@@ -831,12 +860,14 @@ writeinc(
 """
 function writeinc(path::AbstractString, rows; metadata=Metadata(), csvkwargs...)
     Tables.istable(rows) || throw(ArgumentError("rows must be a Tables.jl-compatible table"))
+    meta = validate_metadata(metadata)
+    options = csv_write_options(meta, csvkwargs)
 
     open(path, "w") do io
-        write_metadata(io, metadata)
+        write_metadata(io, meta)
     end
 
-    CSV.write(path, rows; append=true, header=true, csvkwargs...)
+    CSV.write(path, rows; append=true, options...)
 
     return path
 end

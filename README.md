@@ -160,6 +160,12 @@ It is worth repeating the core principles, *i.e.,* safety, portability and simpl
 - Preserve ordinary CSV workflows wherever possible, including backward compatibility with simple CSV files without metadata.
 - Avoid expanding the metadata language into a general configuration language.
 
+IncCSV follows a bounded version of Postel's law: write conservative,
+canonical INC, and read documented compatible variants where doing so improves
+portability. That tolerance is not a license to guess; malformed metadata,
+unsupported `[structure]` keys, duplicate names, and invalid values should
+still be rejected.
+
 and the **non-goals** are:  
 
 - a general-purpose metadata standard,
@@ -188,6 +194,12 @@ semicolon-delimited table. Explicit keyword arguments passed to `readinc`
 override `[structure]` values.
 Those reader options are applied to the CSV component after the metadata block.
 The `comment` option must be a single-character string.
+
+When writing, `writeinc` applies writer-relevant `[structure]` metadata
+(`delim`, `delimiter`, `quotechar`, and `escapechar`) to the CSV component. If
+an explicit CSV writing keyword contradicts those metadata values, `writeinc`
+throws an error rather than writing a file whose metadata describes a different
+CSV format.
 
 Examples of semicolon-, tab-, and pipe-delimited INC files live in
 `artifacts/examples`.

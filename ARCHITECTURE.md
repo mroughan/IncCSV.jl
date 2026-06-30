@@ -19,6 +19,8 @@ CSV.jl, TOML, YAML, JSON, XML, Frictionless Data, or a full metadata catalogue.
 - Prefer explicit (restricted) behavior over clever inference.
 - Preserve ordinary CSV workflows wherever possible, including backward compatibility with simple CSV files without metadata.
 - Avoid expanding the metadata language into a general configuration language.
+- Apply Postel's law in a bounded way: write canonical INC, read documented
+  compatible variants, and reject malformed or ambiguous metadata.
 
 ## File Model
 
@@ -77,7 +79,8 @@ an eye toward behavior that other INC implementations can support consistently.
 
 `delimiter` is accepted as a read-only alias for `delim` for interoperability
 with other INC implementations; internally both map to CSV.jl's `delim`
-keyword.
+keyword. This is an example of bounded reader tolerance: accepted aliases must
+be documented and portable, not private extensions.
 
 Explicit keyword arguments passed to `readinc` always override `[structure]`
 metadata. Reader options are applied to the CSV component after the metadata

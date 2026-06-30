@@ -209,3 +209,29 @@ allowlist, such as `skipto`, `limit`, `missingstring`, `dateformat`,
 `writeinc` does not infer or create `[structure]` metadata from CSV writing
 keyword arguments. If a file needs structure metadata, provide it explicitly in
 the metadata dictionary.
+
+When `[structure]` metadata is present, `writeinc` applies writer-relevant
+values to the CSV component:
+
+- `delim` or `delimiter`
+- `quotechar`
+- `escapechar`
+
+For example, this writes a tab-delimited CSV component because the metadata
+declares `delimiter = tab`:
+
+```julia
+writeinc(
+    "data.inc",
+    rows;
+    metadata=Dict("structure" => Dict("delimiter" => "tab")),
+)
+```
+
+If an explicit writing keyword contradicts the metadata, `writeinc` throws an
+error rather than producing a file whose metadata misdescribes the CSV
+component:
+
+```julia
+writeinc("data.inc", rows; metadata=meta, delim='|')
+```

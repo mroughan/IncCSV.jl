@@ -472,6 +472,38 @@ using Tables
         @test_throws ArgumentError writeinc(joinpath(dir, "empty_section_metadata.inc"), rows; metadata=Dict("section" => Dict{String,String}()))
     end
 
+    @testset "Structure-aware writer" begin
+        # Writer-relevant [structure] metadata must describe the CSV bytes written.
+        path = joinpath(dir, "metadata_driven_tsv.inc")
+        structured_meta = Dict(
+            "title" => "metadata-driven TSV",
+            "structure" => Dict("delimiter" => "tab"),
+        )
+
+        writeinc(path, rows; metadata=structured_meta)
+        lines = readlines(path)
+        csv_header = lines[findfirst(==("---"), lines[2:end]) + 2]
+
+        @test csv_header == "name\tscore"
+        @test !occursin(",", csv_header)
+
+        file = readinc(path, DataFrame)
+        @test metadata(file)["structure"]["delimiter"] == "tab"
+        @test table(file).name == names
+        @test table(file).score == scores
+
+        matching_path = joinpath(dir, "matching_metadata_delim.inc")
+        writeinc(matching_path, rows; metadata=structured_meta, delim='\t')
+        @test readinc(matching_path, DataFrame).table.score == scores
+
+        @test_throws ArgumentError writeinc(
+            joinpath(dir, "conflicting_metadata_delim.inc"),
+            rows;
+            metadata=structured_meta,
+            delim=',',
+        )
+    end
+
     @testset "Metadata mini-schema" begin
         # Validate MUST fields and report allowed-but-not-guaranteed extras.
         schema = readschema(metadata_schema_inc)
