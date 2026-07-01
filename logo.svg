@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="798"
+   height="798"
+   viewBox="0 0 798 798"
+   version="1.1"
+   id="inc-data-logo-10f3-icon-only"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="inc_data_logo_10f3_icon_only.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title2">INC data logo 10f3 icon only</title>
+  <desc
+     id="desc4">A simplified 10f-style icon with INC only inside the table.</desc>
+  <sodipodi:namedview
+     id="namedview"
+     pagecolor="#ffffff"
+     bordercolor="#667085"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:document-units="px"
+     inkscape:zoom="0.42426407"
+     inkscape:cx="491.43921"
+     inkscape:cy="591.61267"
+     inkscape:current-layer="logo"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:window-width="1721"
+     inkscape:window-height="1088"
+     inkscape:window-x="2450"
+     inkscape:window-y="492"
+     inkscape:window-maximized="0" />
+  <defs
+     id="defs22">
+    <style
+       type="text/css"
+       id="style7"><![CDATA[
+      .word { font-family: "IBM Plex Sans", "Inter", "Aptos", "Arial", sans-serif; font-weight: 800; fill: #101828; letter-spacing: 0; }
+      .mono { font-family: "IBM Plex Mono", "Cascadia Mono", "Consolas", monospace; font-weight: 760; fill: #101828; letter-spacing: 0; }
+      .caption { font-family: "IBM Plex Sans", "Inter", "Arial", sans-serif; font-weight: 740; fill: #101828; letter-spacing: 4px; }
+      .smallcap { font-family: "IBM Plex Sans", "Inter", "Arial", sans-serif; font-weight: 700; fill: #667085; letter-spacing: 5px; }
+      .outline { fill: none; stroke: #101828; stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke: #344054; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+      .grid { stroke: #cbd5e1; stroke-width: 10; stroke-linecap: round; }
+    ]]></style>
+    <linearGradient
+       id="dataGradient"
+       x1="0"
+       x2="1"
+       y1="0"
+       y2="1">
+      <stop
+         offset="0"
+         stop-color="#06b6d4"
+         id="stop9" />
+      <stop
+         offset="0.55"
+         stop-color="#2563eb"
+         id="stop11" />
+      <stop
+         offset="1"
+         stop-color="#7c3aed"
+         id="stop13" />
+    </linearGradient>
+    <linearGradient
+       id="metaGradient"
+       x1="0"
+       x2="1"
+       y1="0"
+       y2="1">
+      <stop
+         offset="0"
+         stop-color="#10b981"
+         id="stop16" />
+      <stop
+         offset="1"
+         stop-color="#06b6d4"
+         id="stop18" />
+    </linearGradient>
+    <filter
+       id="softShadow"
+       x="-0.2"
+       y="-0.2"
+       width="1.4"
+       height="1.4">
+      <feDropShadow
+         dx="0"
+         dy="18"
+         stdDeviation="16"
+         flood-color="#101828"
+         flood-opacity="0.12" />
+    </filter>
+  </defs>
+  <g
+     id="logo"
+     inkscape:groupmode="layer"
+     inkscape:label="Logo"
+     transform="translate(-201,-181)">
+    <circle
+       cx="600"
+       cy="580"
+       r="385"
+       fill="#f8fafc"
+       stroke="#101828"
+       stroke-width="28"
+       id="circle24" />
+    <rect
+       x="385"
+       y="420"
+       width="430"
+       height="320"
+       rx="40"
+       fill="#ffffff"
+       stroke="#101828"
+       stroke-width="22"
+       id="rect26" />
+    <path
+       d="M 455.46038,603.10219 H 774.62446 M 455.46038,709.0543 h 319.16408"
+       class="grid"
+       id="path28" />
+    <path
+       d="M 625.75997,448.30633 V 707.35215 M 734.15225,448.30633 v 259.04582"
+       class="grid"
+       id="path30" />
+    <path
+       d="M 600,308 V 420 M 328,580 h 57 m 430,0 h 57 M 600,740 v 112"
+       class="thin"
+       id="path32" />
+    <circle
+       cx="600"
+       cy="250"
+       r="58"
+       fill="#10b981"
+       stroke="#101828"
+       stroke-width="14"
+       id="circle34" />
+    <circle
+       cx="270"
+       cy="580"
+       r="58"
+       fill="#06b6d4"
+       stroke="#101828"
+       stroke-width="14"
+       id="circle36" />
+    <circle
+       cx="930"
+       cy="580"
+       r="58"
+       fill="#2563eb"
+       stroke="#101828"
+       stroke-width="14"
+       id="circle38" />
+    <circle
+       cx="600"
+       cy="910"
+       r="58"
+       fill="#7c3aed"
+       stroke="#101828"
+       stroke-width="14"
+       id="circle40" />
+    <text
+       x="563.89661"
+       y="584.57416"
+       text-anchor="middle"
+       class="mono"
+       font-size="142"
+       id="text42"
+       style="font-size:192px">INC</text>
+  </g>
+  <metadata
+     id="metadata456">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>INC data logo 10f3 icon only</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

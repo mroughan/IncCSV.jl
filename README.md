@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./logo.svg" alt="Project Logo" width="200">
+</p>
+
 # IncCSV.jl
 
 [![Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://mroughan.github.io/IncCSV.jl/dev)
